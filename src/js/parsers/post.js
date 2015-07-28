@@ -13,7 +13,10 @@ export default {
     return post;
   },
 
-  parseSection(element) {
+  parseSection(element, otherArg) {
+    if (!!otherArg) {
+      element = otherArg; // hack to deal with passed previousSection
+    }
     return SectionParser.parse(element);
   }
 };

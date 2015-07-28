@@ -1,3 +1,7 @@
+import { forEach } from './array-utils';
+
+const TEXT_NODE_TYPE = 3;
+
 function detectParentNode(element, callback) {
   while (element) {
     const result = callback(element);
@@ -16,11 +20,57 @@ function detectParentNode(element, callback) {
   };
 }
 
+function isTextNode(node) {
+  return node.nodeType === TEXT_NODE_TYPE;
+}
+
+// perform a pre-order tree traversal of the dom, calling `callbackFn(node)`
+// for every node for which `conditionFn(node)` is true
+function walkDOM(topNode, callbackFn=()=>{}, conditionFn=()=>true) {
+  let currentNode = topNode;
+
+  if (conditionFn(currentNode)) {
+    callbackFn(currentNode);
+  }
+
+  currentNode = currentNode.firstChild;
+
+  while (currentNode) {
+    walkDOM(currentNode, callbackFn, conditionFn);
+    currentNode = currentNode.nextSibling;
+  }
+}
+
+function walkTextNodes(topNode, callbackFn=()=>{}) {
+  const conditionFn = (node) => isTextNode(node);
+  walkDOM(topNode, callbackFn, conditionFn);
+}
+
+
 function clearChildNodes(element) {
   while (element.childNodes.length) {
     element.removeChild(element.childNodes[0]);
   }
 }
+
+// walks DOWN the dom from node to childNodes, returning the element
+// for which `conditionFn(element)` is true
+function walkDOMUntil(topNode, conditionFn=() => {}) {
+  if (!topNode) { throw new Error('Cannot call walkDOMUntil without a node'); }
+  let stack = [topNode];
+  let currentElement;
+
+  while (stack.length) {
+    currentElement = stack.pop();
+
+    if (conditionFn(currentElement)) {
+      return currentElement;
+    }
+
+    forEach(currentElement.childNodes, (el) => stack.push(el));
+  }
+}
+
 
 // see https://github.com/webmodules/node-contains/blob/master/index.js
 function containsNode(parentNode, childNode) {
@@ -32,12 +82,6 @@ function containsNode(parentNode, childNode) {
   return isSame() || isContainedBy();
 }
 
-function forEachChildNode(element, callback) {
-  for (let i=0; i<element.childNodes.length; i++) {
-    callback(element.childNodes[i]);
-  }
-}
-
 /**
  * converts the element's NamedNodeMap of attrs into
  * an object with key-value pairs
@@ -47,10 +91,7 @@ function getAttributes(element) {
   if (element.hasAttributes()) {
     let attributes = element.attributes;
 
-    for (let i=0; i<attributes.length; i++) {
-      let {name, value} = attributes[i];
-      result[name] = value;
-    }
+    forEach(attributes, ({name,value}) => result[name] = value);
   }
   return result;
 }
@@ -59,6 +100,7 @@ export {
   detectParentNode,
   containsNode,
   clearChildNodes,
-  forEachChildNode,
-  getAttributes
+  getAttributes,
+  walkDOMUntil,
+  walkTextNodes
 };

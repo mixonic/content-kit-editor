@@ -1,25 +1,8 @@
 const TEXT_NODE = 3;
 
 import { clearSelection } from 'content-kit-editor/utils/selection-utils';
+import { walkDOMUntil } from 'content-kit-editor/utils/dom-utils';
 import KEY_CODES from 'content-kit-editor/utils/keycodes';
-
-function walkDOMUntil(topNode, conditionFn=() => {}) {
-  if (!topNode) { throw new Error('Cannot call walkDOMUntil without a node'); }
-  let stack = [topNode];
-  let currentElement;
-
-  while (stack.length) {
-    currentElement = stack.pop();
-
-    if (conditionFn(currentElement)) {
-      return currentElement;
-    }
-
-    for (let i=0; i < currentElement.childNodes.length; i++) {
-      stack.push(currentElement.childNodes[i]);
-    }
-  }
-}
 
 function selectRange(startNode, startOffset, endNode, endOffset) {
   clearSelection();

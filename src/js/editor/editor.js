@@ -17,14 +17,13 @@ import CardCommand from '../commands/card';
 import Keycodes from '../utils/keycodes';
 import {
   getSelectionBlockElement,
-  getCursorOffsetInElement,
-  clearSelection,
-  isSelectionInElement
+  getCursorOffsetInElement
 } from '../utils/selection-utils';
 import EventEmitter from '../utils/event-emitter';
 
 import MobiledocParser from "../parsers/mobiledoc";
 import DOMParser from "../parsers/dom";
+import PostParser from '../parsers/post';
 import Renderer from 'content-kit-editor/renderers/editor-dom';
 import RenderTree from 'content-kit-editor/models/render-tree';
 import MobiledocRenderer from '../renderers/mobiledoc';
@@ -33,11 +32,15 @@ import { toArray, mergeWithOptions } from 'content-kit-utils';
 import {
   detectParentNode,
   clearChildNodes,
-  forEachChildNode
 } from '../utils/dom-utils';
+import {
+  forEach
+} from '../utils/array-utils';
 import { getData, setData } from '../utils/element-utils';
 import mixin from '../utils/mixin';
 import EventListenerMixin from '../utils/event-listener';
+import Cursor from '../models/cursor';
+import Section from '../models/markup-section';
 
 const defaults = {
   placeholder: 'Write here...',
@@ -73,17 +76,6 @@ const defaults = {
 };
 
 function bindContentEditableTypingListeners(editor) {
-  editor.addEventListener(editor.element, 'keyup', function(e) {
-    // Assure there is always a supported block tag, and not empty text nodes or divs.
-    // On a carrage return, make sure to always generate a 'p' tag
-    if (!getSelectionBlockElement() ||
-        !editor.element.textContent ||
-       (!e.shiftKey && e.which === Keycodes.ENTER) || (e.ctrlKey && e.which === Keycodes.M)) {
-      // FIXME-IE 'p' tag doesn't work for formatBlock in IE see https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand
-      document.execCommand('formatBlock', false, 'p');
-    }
-  });
-
   // On 'PASTE' sanitize and insert
   editor.addEventListener(editor.element, 'paste', function(e) {
     var data = e.clipboardData;
@@ -119,7 +111,7 @@ function bindAutoTypingListeners(editor) {
 
 function handleSelection(editor) {
   return () => {
-    if (isSelectionInElement(editor.element)) {
+    if (editor.cursor.hasSelection()) {
       editor.hasSelection();
     } else {
       editor.hasNoSelection();
@@ -148,9 +140,22 @@ function bindSelectionEvent(editor) {
 }
 
 function bindKeyListeners(editor) {
+  // escape key
   editor.addEventListener(document, 'keyup', (event) => {
     if (event.keyCode === Keycodes.ESC) {
       editor.trigger('escapeKey');
+    }
+  });
+
+  editor.addEventListener(document, 'keydown', (event) => {
+    switch (event.keyCode) {
+      case Keycodes.BACKSPACE:
+      case Keycodes.DELETE:
+        editor.handleDeletion(event);
+        break;
+      case Keycodes.ENTER:
+        editor.handleNewline(event);
+        break;
     }
   });
 }
@@ -195,7 +200,7 @@ class Editor {
     // FIXME: This should merge onto this.options
     mergeWithOptions(this, defaults, options);
 
-    this._parser   = new DOMParser();
+    this._parser   = PostParser;
     this._renderer = new Renderer(this.cards, this.unknownCardHandler, this.cardOptions);
 
     this.applyClassName();
@@ -274,6 +279,46 @@ class Editor {
     this._renderer.render(this._renderTree);
   }
 
+  handleDeletion() {
+    return;
+    // FIXME must join markers
+
+    // Delete wholly selected sections
+    if (this.cursor.hasSelection()) {
+      const activeSections = this.cursor.activeSections;
+      const whollySelectedSections = activeSections.slice(1,-1);
+      forEach(whollySelectedSections, (section) => this.post.removeSection(section));
+    }
+
+    // If deleting from beginning of section, join sections
+  }
+
+  handleNewline(event) {
+    event.preventDefault();
+
+    if (this.cursor.hasSelection()) {
+      console.log('has selection, should delete it');
+    }
+    let currentSection;
+    let activeSections = this.cursor.activeSections;
+    currentSection = activeSections[activeSections.length - 1];
+    if (!currentSection) { currentSection = this.post.sections[-1]; }
+
+    const leftOffset = this.cursor.leftOffset;
+    const [newLeftSection, newRightSection] = currentSection.split(leftOffset);
+
+    this.post.replaceSection(currentSection, newLeftSection);
+    this.post.insertSectionAfter(newRightSection, newLeftSection);
+
+    console.log('rerender!');
+    this.rerender();
+
+    setTimeout(() => {
+      debugger;
+      this.cursor.moveToSection(newRightSection);
+    });
+  }
+
   hasSelection() {
     if (!this._hasSelection) {
       this.trigger('selection');
@@ -293,9 +338,23 @@ class Editor {
   cancelSelection() {
     if (this._hasSelection) {
       // FIXME perhaps restore cursor position to end of the selection?
-      clearSelection();
+      this.cursor.clearSelection();
       this.hasNoSelection();
     }
+  }
+
+  getActiveMarkers() {
+    const cursor = this.cursor;
+    return cursor.activeMarkers;
+  }
+
+  getActiveSections() {
+    const cursor = this.cursor;
+    return cursor.activeSections;
+  }
+
+  get cursor() {
+    return new Cursor(this);
   }
 
   getCurrentBlockIndex() {
@@ -310,29 +369,6 @@ class Editor {
       return getCursorOffsetInElement(currentBlock);
     }
     return -1;
-  }
-
-  insertBlock(block, index) {
-    this.post.splice(index, 0, block);
-    this.trigger('update');
-  }
-
-  removeBlockAt(index) {
-    this.post.splice(index, 1);
-    this.trigger('update');
-  }
-
-  replaceBlock(block, index) {
-    this.post[index] = block;
-    this.trigger('update');
-  }
-
-  renderBlockAt(/* index, replace */) {
-    throw new Error('Unimplemented');
-  }
-
-  syncContentEditableBlocks() {
-    throw new Error('Unimplemented');
   }
 
   applyClassName() {
@@ -355,70 +391,26 @@ class Editor {
     }
   }
 
+  /**
+   * types of input to handle:
+   *   * delete from beginning of section
+   *       joins 2 sections
+   *   * delete when multiple sections selected
+   *       removes wholly-selected sections,
+   *       joins the partially-selected sections
+   *   * hit enter
+   *       if anything is selected, delete it first, then
+   *       if at end of section, add new empty section after it
+   *       if at beginning of section, add an empty section before it
+   *       if in middle of section, split it into two
+   */    
   handleInput() {
-    // find added sections
-    let sectionsInDOM = [];
-    let newSections = [];
-    let previousSection;
-    forEachChildNode(this.element, (node) => {
-      let sectionRenderNode = this._renderTree.getElementRenderNode(node);
-      if (!sectionRenderNode) {
-        let section = this._parser.parseSection(
-          previousSection,
-          node
-        );
-        newSections.push(section);
-
-        sectionRenderNode = this._renderTree.buildRenderNode(section);
-        sectionRenderNode.element = node;
-        sectionRenderNode.markClean();
-
-        if (previousSection) {
-          this.post.insertSectionAfter(section, previousSection);
-          this._renderTree.node.insertAfter(sectionRenderNode, previousSection.renderNode);
-        } else {
-          this.post.prependSection(section);
-          this._renderTree.node.insertAfter(sectionRenderNode, null);
-        }
-      }
-      // may cause duplicates to be included
-      let section = sectionRenderNode.postNode;
-      sectionsInDOM.push(section);
-      previousSection = section;
-    });
-
-    // remove deleted nodes
-    let i;
-    for (i=this.post.sections.length-1;i>=0;i--) {
-      let section = this.post.sections[i];
-      if (sectionsInDOM.indexOf(section) === -1) {
-        if (section.renderNode) {
-          section.renderNode.scheduleForRemoval();
-        } else {
-          throw new Error('All sections are expected to have a renderNode');
-        }
-      }
-    }
-
-    // reparse the section(s) with the cursor
-    const sectionsWithCursor = this.getSectionsWithCursor();
-    // FIXME: This is a hack to ensure a previous section is parsed when the
-    // user presses enter (or pastes a newline)
-    let firstSection = sectionsWithCursor[0];
-    if (firstSection) {
-      let previousSection = this.post.getPreviousSection(firstSection);
-      if (previousSection) {
-        sectionsWithCursor.unshift(previousSection);
-      }
-    }
-    sectionsWithCursor.forEach((section) => {
-      if (newSections.indexOf(section) === -1) {
-        this.reparseSection(section);
-      }
-    });
-
-    this.rerender();
+    this.reparse();
     this.trigger('update');
+  }
+
+  reparse() {
+    this.post = this._parser.parse(this.element);
   }
 
   getSectionsWithCursor() {

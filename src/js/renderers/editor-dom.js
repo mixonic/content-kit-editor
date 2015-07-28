@@ -17,6 +17,7 @@ function createElementFromMarkup(doc, markup) {
 
 function renderMarkupSection(doc, section, markers) {
   var element = doc.createElement(section.tagName);
+  section.element = element;
   var elements = [element];
   var currentElement = element;
   var i, l, j, m, marker, openTypes, closeTypes, text;

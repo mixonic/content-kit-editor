@@ -9,6 +9,7 @@ export default class Section {
     this.markers = [];
     this.tagName = tagName || DEFAULT_TAG_NAME;
     this.type = MARKUP_SECTION_TYPE;
+    this.element = null;
 
     markers.forEach(m => this.appendMarker(m));
   }
@@ -25,6 +26,14 @@ export default class Section {
     let left = [], right = [], middle;
 
     middle = this.markerContaining(offset);
+    // end of section
+    if (!middle) {
+      debugger;
+      return [
+        new this.constructor(this.tagName, this.markers),
+        new this.constructor(this.tagName, [])
+      ];
+    }
     const middleIndex = this.markers.indexOf(middle);
 
     for (let i=0; i<this.markers.length; i++) {
@@ -48,13 +57,12 @@ export default class Section {
   /**
    * A marker contains this offset if:
    *   * The offset is between the marker's start and end
-   *   * it is the first marker and the offset is 0
-   *   * it is the last marker and the offset is >= total length of all the markers
-   *   * the offset is between two markers and it is the left marker (right-inclusive)
+   *   * the offset is between two markers and this is the right marker (and leftInclusive is true)
+   *   * the offset is between two markers and this is the left marker (and leftInclusive is false)
    *
    * @return {Marker} The marker that contains this offset
    */
-  markerContaining(offset) {
+  markerContaining(offset, leftInclusive=true) {
     var length=0, i=0;
 
     if (offset === 0) { return this.markers[0]; }
@@ -63,6 +71,11 @@ export default class Section {
       length += this.markers[i].length;
       i++;
     }
-    return this.markers[i-1];
+
+    if (length > offset) {
+      return this.markers[i-1];
+    } else if (length === offset) {
+      return this.markers[leftInclusive ? i : i-1];
+    }
   }
 }
