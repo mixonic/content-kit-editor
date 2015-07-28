@@ -13,6 +13,11 @@ const Marker = class Marker {
     }
   }
 
+  clone() {
+    const clonedMarkups = this.markups.slice();
+    return new this.constructor(this.value, clonedMarkups);
+  }
+
   get length() {
     return this.value.length;
   }

@@ -110,5 +110,6 @@ export default {
   clearSelection,
   triggerEvent,
   triggerKeyEvent,
-  makeDOM
+  makeDOM,
+  KEY_CODES
 };

@@ -22,7 +22,6 @@ import {
 import EventEmitter from '../utils/event-emitter';
 
 import MobiledocParser from "../parsers/mobiledoc";
-import DOMParser from "../parsers/dom";
 import PostParser from '../parsers/post';
 import Renderer from 'content-kit-editor/renderers/editor-dom';
 import RenderTree from 'content-kit-editor/models/render-tree';
@@ -40,7 +39,8 @@ import { getData, setData } from '../utils/element-utils';
 import mixin from '../utils/mixin';
 import EventListenerMixin from '../utils/event-listener';
 import Cursor from '../models/cursor';
-import Section from '../models/markup-section';
+import { MARKUP_SECTION_TYPE } from '../models/markup-section';
+import { generateBuilder } from '../utils/post-builder';
 
 const defaults = {
   placeholder: 'Write here...',
@@ -281,41 +281,48 @@ class Editor {
 
   handleDeletion() {
     return;
-    // FIXME must join markers
-
-    // Delete wholly selected sections
-    if (this.cursor.hasSelection()) {
-      const activeSections = this.cursor.activeSections;
-      const whollySelectedSections = activeSections.slice(1,-1);
-      forEach(whollySelectedSections, (section) => this.post.removeSection(section));
-    }
-
-    // If deleting from beginning of section, join sections
   }
 
   handleNewline(event) {
-    event.preventDefault();
+    const {
+      leftRenderNode,
+      rightRenderNode,
+      leftOffset
+    } = this.cursor.offsets;
 
-    if (this.cursor.hasSelection()) {
-      console.log('has selection, should delete it');
+    // FIXME handle when the selection is not collapsed, this code assumes it is
+    if (leftRenderNode && rightRenderNode) {
+      event.preventDefault();
+
+      const markerRenderNode = leftRenderNode;
+      const marker = markerRenderNode.postNode;
+      const section = marker.section;
+      const [leftMarker, rightMarker] = marker.split(leftOffset);
+
+      section.insertMarkerAfter(leftMarker, marker);
+      markerRenderNode.scheduleForRemoval();
+
+      const newSection = generateBuilder().generateMarkupSection('P');
+      newSection.appendMarker(rightMarker);
+
+      let nodeForMove = markerRenderNode.nextSibling;
+      while (nodeForMove) {
+        nodeForMove.scheduleForRemoval();
+        let movedMarker = nodeForMove.postNode.clone();
+        newSection.appendMarker(movedMarker);
+
+        nodeForMove = nodeForMove.nextSibling;
+      }
+
+      const post = this.post;
+      post.insertSectionAfter(newSection, section);
     }
-    let currentSection;
-    let activeSections = this.cursor.activeSections;
-    currentSection = activeSections[activeSections.length - 1];
-    if (!currentSection) { currentSection = this.post.sections[-1]; }
 
-    const leftOffset = this.cursor.leftOffset;
-    const [newLeftSection, newRightSection] = currentSection.split(leftOffset);
-
-    this.post.replaceSection(currentSection, newLeftSection);
-    this.post.insertSectionAfter(newRightSection, newLeftSection);
-
-    console.log('rerender!');
     this.rerender();
+    this.trigger('update');
 
     setTimeout(() => {
-      debugger;
-      this.cursor.moveToSection(newRightSection);
+      //this.cursor.moveToSection(newRightSection);
     });
   }
 
@@ -398,11 +405,13 @@ class Editor {
    *   * delete when multiple sections selected
    *       removes wholly-selected sections,
    *       joins the partially-selected sections
-   *   * hit enter
+   *   * hit enter (handled by capturing 'keydown' for enter key and `handleNewline`)
    *       if anything is selected, delete it first, then
-   *       if at end of section, add new empty section after it
-   *       if at beginning of section, add an empty section before it
-   *       if in middle of section, split it into two
+   *       split the current marker at the cursor position,
+   *         schedule removal of every marker after the split,
+   *         create new section, append it to post
+   *         append the after-split markers onto the new section
+   *         rerender -- this should render the new section at the appropriate spot
    */    
   handleInput() {
     this.reparse();
@@ -410,7 +419,61 @@ class Editor {
   }
 
   reparse() {
-    this.post = this._parser.parse(this.element);
+    // find added sections
+    let sectionsInDOM = [];
+    let newSections = [];
+    let previousSection;
+    forEach(this.element.childNodes, (node) => {
+      let sectionRenderNode = this._renderTree.getElementRenderNode(node);
+      if (!sectionRenderNode) {
+        let section = this._parser.parseSection(node);
+        newSections.push(section);
+
+        // create a clean "already-rendered" node to represent the fact that
+        // this (new) section is already in DOM
+        sectionRenderNode = this._renderTree.buildRenderNode(section);
+        sectionRenderNode.element = node;
+        sectionRenderNode.markClean();
+
+        if (previousSection) {
+          // insert after existing section
+          this.post.insertSectionAfter(section, previousSection);
+          this._renderTree.node.insertAfter(sectionRenderNode, previousSection.renderNode);
+        } else {
+          // prepend at beginning (first section)
+          this.post.prependSection(section);
+          this._renderTree.node.insertAfter(sectionRenderNode, null);
+        }
+      }
+      // may cause duplicates to be included
+      let section = sectionRenderNode.postNode;
+      sectionsInDOM.push(section);
+      previousSection = section;
+    });
+
+    // remove deleted nodes
+    let i;
+    for (i=this.post.sections.length-1;i>=0;i--) {
+      let section = this.post.sections[i];
+      if (sectionsInDOM.indexOf(section) === -1) {
+        if (section.renderNode) {
+          section.renderNode.scheduleForRemoval();
+        } else {
+          throw new Error('All sections are expected to have a renderNode');
+        }
+      }
+    }
+
+    // reparse the section(s) with the cursor
+    const sectionsWithCursor = this.getSectionsWithCursor();
+    sectionsWithCursor.forEach((section) => {
+      if (newSections.indexOf(section) === -1) {
+        this.reparseSection(section);
+      }
+    });
+
+    this.rerender();
+    this.trigger('update');
   }
 
   getSectionsWithCursor() {
@@ -430,7 +493,10 @@ class Editor {
     let { startContainer:startElement, endContainer:endElement } = range;
 
     let getElementRenderNode = (e) => {
-      return this._renderTree.getElementRenderNode(e);
+      let node = this._renderTree.getElementRenderNode(e);
+      if (node && node.postNode.type === MARKUP_SECTION_TYPE) {
+        return node;
+      }
     };
     let { result:startRenderNode } = detectParentNode(startElement, getElementRenderNode);
     let { result:endRenderNode } = detectParentNode(endElement, getElementRenderNode);
@@ -446,17 +512,7 @@ class Editor {
   }
 
   reparseSection(section) {
-    let sectionRenderNode = section.renderNode;
-    let sectionElement = sectionRenderNode.element;
-    let previousSection = this.post.getPreviousSection(section);
-
-    var newSection = this._parser.parseSection(
-      previousSection,
-      sectionElement
-    );
-    section.markers = newSection.markers;
-
-    this.trigger('update');
+    this._parser.reparseSection(section, this._renderTree);
   }
 
   serialize() {

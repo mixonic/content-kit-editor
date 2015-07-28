@@ -85,6 +85,7 @@ function containsNode(parentNode, childNode) {
 /**
  * converts the element's NamedNodeMap of attrs into
  * an object with key-value pairs
+ * FIXME should add a whitelist as a second arg
  */
 function getAttributes(element) {
   let result = {};
@@ -96,11 +97,27 @@ function getAttributes(element) {
   return result;
 }
 
+/**
+ * converts the element's NamedNodeMap of attrs into
+ * an array of key1,value1,key2,value2,...
+ * FIXME should add a whitelist as a second arg
+ */
+function getAttributesArray(element) {
+  let attributes = getAttributes(element);
+  let result = [];
+  Object.keys(attributes).forEach((key) => {
+    result.push(key);
+    result.push(attributes[key]);
+  });
+  return result;
+}
+
 export {
   detectParentNode,
   containsNode,
   clearChildNodes,
   getAttributes,
+  getAttributesArray,
   walkDOMUntil,
   walkTextNodes
 };

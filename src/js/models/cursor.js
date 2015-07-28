@@ -59,7 +59,18 @@ const Cursor = class Cursor {
       rightOffset = Math.max(anchorOffset, focusOffset);
     }
 
-    return { leftNode, rightNode, leftOffset, rightOffset };
+    const renderTree = this.editor._renderTree;
+    const leftRenderNode = renderTree.elements.get(leftNode),
+          rightRenderNode = renderTree.elements.get(rightNode);
+
+    return {
+      leftNode,
+      rightNode,
+      leftOffset,
+      rightOffset,
+      leftRenderNode,
+      rightRenderNode
+    };
   }
 
   get activeMarkers() {

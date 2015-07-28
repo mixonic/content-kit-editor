@@ -4,8 +4,6 @@ import { MOBILEDOC_VERSION } from 'content-kit-editor/renderers/mobiledoc';
 
 const { test, module } = QUnit;
 
-const newline = '\r\n';
-
 let fixture, editor, editorElement;
 const mobileDocWith1Section = {
   version: MOBILEDOC_VERSION,
@@ -59,22 +57,22 @@ module('Acceptance: Editor sections', {
   },
 
   afterEach() {
-    editor.destroy();
+    if (editor) {
+      editor.destroy();
+    }
   }
 });
 
-test('typing inserts section', (assert) => {
+Helpers.skipInPhantom('typing inserts section', (assert) => {
   editor = new Editor(editorElement, {mobiledoc: mobileDocWith1Section});
   assert.equal($('#editor p').length, 1, 'has 1 paragraph to start');
 
-  const text = 'new section';
-
-  Helpers.dom.moveCursorTo(editorElement);
-  document.execCommand('insertText', false, text + newline);
+  Helpers.dom.moveCursorTo(editorElement.childNodes[0].childNodes[0], 5);
+  Helpers.dom.triggerKeyEvent(document, 'keydown', Helpers.dom.KEY_CODES.ENTER);
 
   assert.equal($('#editor p').length, 2, 'has 2 paragraphs after typing return');
-  assert.hasElement(`#editor p:contains(${text})`, 'has first pargraph with "A"');
-  assert.hasElement('#editor p:contains(only section)', 'has correct second paragraph text');
+  assert.hasElement(`#editor p:contains(only)`, 'has correct first pargraph text');
+  assert.hasElement('#editor p:contains(section)', 'has correct second paragraph text');
 });
 
 test('deleting across 0 sections merges them', (assert) => {

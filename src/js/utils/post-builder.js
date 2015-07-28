@@ -26,8 +26,8 @@ var builder = {
     const type = 'card';
     return { name, payload, type };
   },
-  generateMarker: function(markers, value) {
-    return new Marker(value, markers);
+  generateMarker: function(markups, value) {
+    return new Marker(value, markups);
   },
   generateMarkup: function(tagName, attributes) {
     if (attributes) {

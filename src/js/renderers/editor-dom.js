@@ -3,7 +3,10 @@ import CardNode from "content-kit-editor/models/card-node";
 import { detect } from 'content-kit-editor/utils/array-utils';
 import { POST_TYPE } from "../models/post";
 import { MARKUP_SECTION_TYPE } from "../models/markup-section";
+import { MARKER_TYPE } from "../models/marker";
 import { IMAGE_SECTION_TYPE } from "../models/image";
+
+export const UNPRINTABLE_CHARACTER = "\u200C";
 
 function createElementFromMarkup(doc, markup) {
   var element = doc.createElement(markup.tagName);
@@ -15,38 +18,45 @@ function createElementFromMarkup(doc, markup) {
   return element;
 }
 
-function renderMarkupSection(doc, section, markers) {
+function renderMarkupSection(doc, section) {
   var element = doc.createElement(section.tagName);
   section.element = element;
-  var elements = [element];
-  var currentElement = element;
-  var i, l, j, m, marker, openTypes, closeTypes, text;
-  var markup;
-  var openedElement;
-  for (i=0, l=markers.length;i<l;i++) {
-    marker = markers[i];
-    openTypes = marker.openedMarkups;
-    closeTypes = marker.closedMarkups;
-    text = marker.value;
+  return element;
+}
 
-    for (j=0, m=openTypes.length;j<m;j++) {
-      markup = openTypes[j];
-      openedElement = createElementFromMarkup(doc, markup);
-      currentElement.appendChild(openedElement);
-      elements.push(openedElement);
-      currentElement = openedElement;
-    }
+function isEmptyText(text) {
+  return text.trim() === '';
+}
 
-    currentElement.appendChild(doc.createTextNode(text));
-
-    for (j=0, m=closeTypes.length;j<m;j++) {
-      elements.pop();
-      currentElement = elements[elements.length-1];
-    }
-
+function renderMarker(doc, marker, element) {
+  const openTypes = marker.openedMarkups;
+  let closeTypesLength = marker.closedMarkups.length;
+  let text = marker.value;
+  if (isEmptyText(text)) {
+    // This is necessary to allow the cursor to move into this area
+    text = UNPRINTABLE_CHARACTER;
   }
 
-  return element;
+  const textNode = doc.createTextNode(text);
+  let markerType;
+  let currentElement = element;
+
+  for (let j=0, m=openTypes.length;j<m;j++) {
+    markerType = openTypes[j];
+    let openedElement = createElementFromMarkerType(doc, markerType);
+    currentElement.appendChild(openedElement);
+    currentElement = openedElement;
+  }
+
+  currentElement.appendChild(textNode);
+
+  // walk up the DOM to find the top-level container of this marker.
+  // It will be the node that we `appendChild` the next marker's node onto
+  while (closeTypesLength--) {
+    currentElement = currentElement.parentNode;
+  }
+
+  return { nextElement: currentElement, textNode };
 }
 
 class Visitor {
@@ -64,9 +74,9 @@ class Visitor {
     visit(renderNode, post.sections);
   }
 
-  [MARKUP_SECTION_TYPE](renderNode, section) {
+  [MARKUP_SECTION_TYPE](renderNode, section, visit) {
     if (!renderNode.element) {
-      let element = renderMarkupSection(window.document, section, section.markers);
+      let element = renderMarkupSection(window.document, section);
       if (renderNode.previousSibling) {
         let previousElement = renderNode.previousSibling.element;
         let nextElement = previousElement.nextSibling;
@@ -79,6 +89,23 @@ class Visitor {
       }
       renderNode.element = element;
     }
+    visit(renderNode, section.markers);
+  }
+
+  [MARKER_TYPE](renderNode, marker) {
+    let parentElement;
+    if (renderNode.previousSibling) {
+      parentElement = renderNode.previousSibling.nextMarkerElement;
+    } else {
+      parentElement = renderNode.parentNode.element;
+    }
+
+    // FIXME before we render marker, should delete previous renderNode's element
+    // and up until the next marker element
+    let {nextElement, textNode} = renderMarker(window.document, marker, parentElement);
+
+    renderNode.nextMarkerElement = nextElement;
+    renderNode.element = textNode;
   }
 
   [IMAGE_SECTION_TYPE](renderNode, section) {
@@ -135,11 +162,27 @@ let destroyHooks = {
       renderNode.element.parentNode.removeChild(renderNode.element);
     }
   },
+
+  [MARKER_TYPE](renderNode, marker) {
+    // FIXME before we render marker, should delete previous renderNode's element
+    // and up until the next marker element
+
+    let element = renderNode.element;
+    while (element.parentNode !== renderNode.nextMarkerElement) {
+      element = element.parentNode;
+    }
+
+    marker.section.removeMarker(marker);
+
+    element.parentNode.removeChild(element);
+  },
+
   [IMAGE_SECTION_TYPE](renderNode, section) {
     let post = renderNode.parentNode.postNode;
     post.removeSection(section);
     renderNode.element.parentNode.removeChild(renderNode.element);
   },
+
   card(renderNode, section) {
     if (renderNode.cardNode) {
       renderNode.cardNode.teardown();
@@ -162,24 +205,26 @@ function removeChildren(parentNode) {
   }
 }
 
-function lookupNode(renderTree, parentNode, section, previousNode) {
-  if (section.renderNode) {
-    return section.renderNode;
+// Find an existing render node for the given postNode, or
+// create one, insert it into the tree, and return it
+function lookupNode(renderTree, parentNode, postNode, previousNode) {
+  if (postNode.renderNode) {
+    return postNode.renderNode;
   } else {
-    let renderNode = new RenderNode(section);
+    let renderNode = new RenderNode(postNode);
     renderNode.renderTree = renderTree;
     parentNode.insertAfter(renderNode, previousNode);
-    section.renderNode = renderNode;
+    postNode.renderNode = renderNode;
     return renderNode;
   }
 }
 
 function renderInternal(renderTree, visitor) {
   let nodes = [renderTree.node];
-  function visit(parentNode, sections) {
+  function visit(parentNode, postNodes) {
     let previousNode;
-    sections.forEach(section => {
-      let node = lookupNode(renderTree, parentNode, section, previousNode);
+    postNodes.forEach(postNode => {
+      let node = lookupNode(renderTree, parentNode, postNode, previousNode);
       if (node.isDirty) {
         nodes.push(node);
       }

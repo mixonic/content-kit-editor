@@ -14,9 +14,32 @@ export default class Section {
     markers.forEach(m => this.appendMarker(m));
   }
 
+  prependMarker(marker) {
+    marker.section = this;
+    this.markers.unshift(marker);
+  }
+
   appendMarker(marker) {
     marker.section = this;
     this.markers.push(marker);
+  }
+
+  removeMarker(marker) {
+    const index = this.markers.indexOf(marker);
+    if (index === -1) {
+      throw new Error('Cannot remove not-found marker');
+    }
+    this.markers.splice(index, 1);
+  }
+
+  insertMarkerAfter(marker, previousMarker) {
+    const index = this.markers.indexOf(previousMarker);
+    if (index === -1) {
+      throw new Error('Cannot insert marker after: ' + previousMarker);
+    }
+
+    marker.section = this;
+    this.markers.splice(index + 1, 0, marker);
   }
 
   /**
@@ -28,7 +51,6 @@ export default class Section {
     middle = this.markerContaining(offset);
     // end of section
     if (!middle) {
-      debugger;
       return [
         new this.constructor(this.tagName, this.markers),
         new this.constructor(this.tagName, [])
