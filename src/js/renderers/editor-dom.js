@@ -38,12 +38,12 @@ function renderMarker(doc, marker, element) {
   }
 
   const textNode = doc.createTextNode(text);
-  let markerType;
+  let markup;
   let currentElement = element;
 
   for (let j=0, m=openTypes.length;j<m;j++) {
-    markerType = openTypes[j];
-    let openedElement = createElementFromMarkerType(doc, markerType);
+    markup = openTypes[j];
+    let openedElement = createElementFromMarkup(doc, markup);
     currentElement.appendChild(openedElement);
     currentElement = openedElement;
   }
