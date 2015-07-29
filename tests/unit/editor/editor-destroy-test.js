@@ -6,13 +6,19 @@ import { Editor } from 'content-kit-editor';
 let editor;
 let editorElement;
 
+const mobiledoc = [
+  [],
+  [[
+    1, 'P', [[[], 0, 'HELLO']]
+  ]]
+];
+
 module('Unit: Editor #destroy', {
   beforeEach() {
     let fixture = $('#qunit-fixture')[0];
     editorElement = document.createElement('div');
-    editorElement.innerHTML = 'HELLO';
     fixture.appendChild(editorElement);
-    editor = new Editor(editorElement);
+    editor = new Editor(editorElement, {mobiledoc});
   },
   afterEach() {
     if (editor) {

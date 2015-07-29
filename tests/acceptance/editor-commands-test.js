@@ -5,14 +5,20 @@ const { test, module } = QUnit;
 
 let fixture, editor, editorElement, selectedText;
 
+const mobiledoc = [
+  [],
+  [[
+    1, 'P', [[[], 0, 'THIS IS A TEST']]
+  ]]
+];
+
 module('Acceptance: Editor commands', {
   beforeEach() {
     fixture = document.getElementById('qunit-fixture');
     editorElement = document.createElement('div');
     editorElement.setAttribute('id', 'editor');
-    editorElement.innerHTML = 'THIS IS A TEST';
     fixture.appendChild(editorElement);
-    editor = new Editor(editorElement);
+    editor = new Editor(editorElement, {mobiledoc});
 
     selectedText = 'IS A';
     Helpers.dom.selectText(selectedText, editorElement);

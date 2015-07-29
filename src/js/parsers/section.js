@@ -99,7 +99,8 @@ export default {
   },
 
   sectionTagNameFromElement(element) {
-    let tagName = element.tagName.toLowerCase();
+    let tagName = element.tagName;
+    tagName = tagName && tagName.toLowerCase();
     if (VALID_MARKUP_SECTION_TAGNAMES.indexOf(tagName) === -1) { tagName = DEFAULT_TAG_NAME; }
     return tagName;
   }

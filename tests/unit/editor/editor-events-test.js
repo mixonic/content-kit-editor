@@ -6,13 +6,19 @@ import { Editor } from 'content-kit-editor';
 let editor, editorElement;
 let triggered = [];
 
+const mobiledoc = [
+  [],
+  [[
+    1, 'P', [[[], 0, 'this is the editor']]
+  ]]
+];
+
 module('Unit: Editor: events', {
   beforeEach() {
     editorElement = document.createElement('div');
-    editorElement.innerHTML = 'this is the editor';
     document.getElementById('qunit-fixture').appendChild(editorElement);
 
-    editor = new Editor(editorElement);
+    editor = new Editor(editorElement, {mobiledoc});
     editor.trigger = (name) => triggered.push(name);
   },
 
