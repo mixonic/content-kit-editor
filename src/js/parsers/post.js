@@ -5,6 +5,7 @@ import { forEach } from 'content-kit-editor/utils/array-utils';
 import { generateBuilder } from '../utils/post-builder';
 import { getAttributesArray, walkTextNodes } from '../utils/dom-utils';
 import { UNPRINTABLE_CHARACTER } from 'content-kit-editor/renderers/editor-dom';
+import Markup from 'content-kit-editor/models/markup';
 
 const sanitizeTextRegex = new RegExp(UNPRINTABLE_CHARACTER, 'g');
 
@@ -41,10 +42,12 @@ export default {
 
     // Turn an element node into a markup
     function markupFromNode(node) {
-      let tagName = node.tagName;
-      let attributes = getAttributesArray(node);
+      if (Markup.isValidElement(node)) {
+        let tagName = node.tagName;
+        let attributes = getAttributesArray(node);
 
-      return generateBuilder().generateMarkup(tagName, attributes);
+        return generateBuilder().generateMarkup(tagName, attributes);
+      }
     }
 
     // walk up from the textNode until the rootNode, converting each
@@ -53,7 +56,10 @@ export default {
       let markups = [];
       let currentNode = textNode.parentNode;
       while (currentNode && currentNode !== rootNode) {
-        markups.push(markupFromNode(currentNode));
+        let markup = markupFromNode(currentNode);
+        if (markup) {
+          markups.push(markup);
+        }
 
         currentNode = currentNode.parentNode;
       }

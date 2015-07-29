@@ -12,6 +12,7 @@ import Markup from 'content-kit-editor/models/markup';
 import { VALID_MARKUP_TAGNAMES } from 'content-kit-editor/models/markup';
 import { getAttributes } from 'content-kit-editor/utils/dom-utils';
 import { forEach } from 'content-kit-editor/utils/array-utils';
+import { generateBuilder } from 'content-kit-editor/utils/post-builder';
 
 /**
  * parses an element into a section, ignoring any non-markup
@@ -20,10 +21,6 @@ import { forEach } from 'content-kit-editor/utils/array-utils';
  */
 export default {
   parse(element) {
-    if (!this.isSectionElement(element)) {
-      element = this.wrapInSectionElement(element);
-    }
-
     const tagName = this.sectionTagNameFromElement(element);
     const section = new MarkupSection(tagName);
     const state = {section, markups:[], text:''};
@@ -38,13 +35,11 @@ export default {
       state.section.appendMarker(marker);
     }
 
-    return section;
-  },
+    if (section.markers.length === 0) {
+      section.appendMarker(generateBuilder().generateBlankMarker());
+    }
 
-  wrapInSectionElement(element) {
-    const parent = document.createElement(DEFAULT_TAG_NAME);
-    parent.appendChild(element);
-    return parent;
+    return section;
   },
 
   parseNode(node, state) {

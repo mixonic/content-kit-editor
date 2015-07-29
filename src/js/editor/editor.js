@@ -423,6 +423,7 @@ class Editor {
     let sectionsInDOM = [];
     let newSections = [];
     let previousSection;
+
     forEach(this.element.childNodes, (node) => {
       let sectionRenderNode = this._renderTree.getElementRenderNode(node);
       if (!sectionRenderNode) {
