@@ -168,13 +168,16 @@ let destroyHooks = {
     // and up until the next marker element
 
     let element = renderNode.element;
-    while (element.parentNode !== renderNode.nextMarkerElement) {
+    while (element.parentNode && element.parentNode !== renderNode.nextMarkerElement) {
       element = element.parentNode;
     }
 
     marker.section.removeMarker(marker);
 
-    element.parentNode.removeChild(element);
+    if (element.parentNode) {
+      // if no parentNode, the browser already removed this element
+      element.parentNode.removeChild(element);
+    }
   },
 
   [IMAGE_SECTION_TYPE](renderNode, section) {
