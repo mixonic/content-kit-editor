@@ -1,17 +1,21 @@
 const { module, test } = QUnit;
 import Helpers from '../../test-helpers';
+import { MOBILEDOC_VERSION } from 'content-kit-editor/renderers/mobiledoc';
 
 import { Editor } from 'content-kit-editor';
 
 let editor, editorElement;
 let triggered = [];
 
-const mobiledoc = [
-  [],
-  [[
-    1, 'P', [[[], 0, 'this is the editor']]
-  ]]
-];
+const mobiledoc = {
+  version: MOBILEDOC_VERSION,
+  sections: [
+    [],
+    [[
+      1, 'P', [[[], 0, 'this is the editor']]
+    ]]
+  ]
+};
 
 module('Unit: Editor: events', {
   beforeEach() {

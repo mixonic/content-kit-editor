@@ -1,16 +1,20 @@
 import { Editor } from 'content-kit-editor';
 import Helpers from '../test-helpers';
+import { MOBILEDOC_VERSION } from 'content-kit-editor/renderers/mobiledoc';
 
 const { test, module } = QUnit;
 
 let fixture, editor, editorElement, selectedText;
 
-const mobiledoc = [
-  [],
-  [[
-    1, 'P', [[[], 0, 'THIS IS A TEST']]
-  ]]
-];
+const mobiledoc = {
+  version: MOBILEDOC_VERSION,
+  sections: [
+    [],
+    [[
+      1, 'P', [[[], 0, 'THIS IS A TEST']]
+    ]]
+  ]
+};
 
 module('Acceptance: Editor commands', {
   beforeEach() {

@@ -1,17 +1,22 @@
 const { module, test } = window.QUnit;
 import Helpers from '../../test-helpers';
+import { MOBILEDOC_VERSION } from 'content-kit-editor/renderers/mobiledoc';
 
 import { Editor } from 'content-kit-editor';
 
 let editor;
 let editorElement;
 
-const mobiledoc = [
-  [],
-  [[
-    1, 'P', [[[], 0, 'HELLO']]
-  ]]
-];
+const mobiledoc = {
+  version: MOBILEDOC_VERSION,
+  sections: [
+    [],
+    [[
+      1, 'P', [[[], 0, 'HELLO']]
+    ]]
+  ]
+};
+
 
 module('Unit: Editor #destroy', {
   beforeEach() {
