@@ -150,16 +150,17 @@ const Cursor = class Cursor {
 
   // moves cursor to the start of the section
   moveToSection(section) {
-    const element = section.renderNode.element;
+    const marker = section.markers[0];
+    if (!marker) { throw new Error('Cannot move cursor to section without a marker'); }
+    const markerElement = marker.renderNode.element;
 
     let r = document.createRange();
-    r.selectNode(element);
+    r.selectNode(markerElement);
     r.collapse(true);
     const selection = this.selection;
     if (selection.rangeCount > 0) {
       selection.removeAllRanges();
     }
-    element.focus();
     selection.addRange(r);
   }
 };
