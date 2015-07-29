@@ -290,40 +290,40 @@ class Editor {
       leftOffset
     } = this.cursor.offsets;
 
+    // if there's no left/right nodes, we are probably not in the editor,
+    // or we have selected some non-marker thing like a card
+    if (!leftRenderNode || !rightRenderNode) { return; }
+
     // FIXME handle when the selection is not collapsed, this code assumes it is
-    if (leftRenderNode && rightRenderNode) {
-      event.preventDefault();
+    event.preventDefault();
 
-      const markerRenderNode = leftRenderNode;
-      const marker = markerRenderNode.postNode;
-      const section = marker.section;
-      const [leftMarker, rightMarker] = marker.split(leftOffset);
+    const markerRenderNode = leftRenderNode;
+    const marker = markerRenderNode.postNode;
+    const section = marker.section;
+    const [leftMarker, rightMarker] = marker.split(leftOffset);
 
-      section.insertMarkerAfter(leftMarker, marker);
-      markerRenderNode.scheduleForRemoval();
+    section.insertMarkerAfter(leftMarker, marker);
+    markerRenderNode.scheduleForRemoval();
 
-      const newSection = generateBuilder().generateMarkupSection('P');
-      newSection.appendMarker(rightMarker);
+    const newSection = generateBuilder().generateMarkupSection('P');
+    newSection.appendMarker(rightMarker);
 
-      let nodeForMove = markerRenderNode.nextSibling;
-      while (nodeForMove) {
-        nodeForMove.scheduleForRemoval();
-        let movedMarker = nodeForMove.postNode.clone();
-        newSection.appendMarker(movedMarker);
+    let nodeForMove = markerRenderNode.nextSibling;
+    while (nodeForMove) {
+      nodeForMove.scheduleForRemoval();
+      let movedMarker = nodeForMove.postNode.clone();
+      newSection.appendMarker(movedMarker);
 
-        nodeForMove = nodeForMove.nextSibling;
-      }
-
-      const post = this.post;
-      post.insertSectionAfter(newSection, section);
+      nodeForMove = nodeForMove.nextSibling;
     }
+
+    const post = this.post;
+    post.insertSectionAfter(newSection, section);
 
     this.rerender();
     this.trigger('update');
 
-    setTimeout(() => {
-      //this.cursor.moveToSection(newRightSection);
-    });
+    this.cursor.moveToSection(newSection);
   }
 
   hasSelection() {

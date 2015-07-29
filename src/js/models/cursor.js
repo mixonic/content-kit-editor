@@ -16,6 +16,7 @@ import {
 const Cursor = class Cursor {
   constructor(editor) {
     this.editor = editor;
+    this.renderTree = editor._renderTree;
     this.post = editor.post;
   }
 
@@ -59,9 +60,8 @@ const Cursor = class Cursor {
       rightOffset = Math.max(anchorOffset, focusOffset);
     }
 
-    const renderTree = this.editor._renderTree;
-    const leftRenderNode = renderTree.elements.get(leftNode),
-          rightRenderNode = renderTree.elements.get(rightNode);
+    const leftRenderNode = this.renderTree.elements.get(leftNode),
+          rightRenderNode = this.renderTree.elements.get(rightNode);
 
     return {
       leftNode,
@@ -148,9 +148,9 @@ const Cursor = class Cursor {
     return sections.slice(startIndex, endIndex);
   }
 
+  // moves cursor to the start of the section
   moveToSection(section) {
-    const sectionIndex = this.post.sections.indexOf(section);
-    const element = this.editor.element.childNodes[sectionIndex];
+    const element = section.renderNode.element;
 
     let r = document.createRange();
     r.selectNode(element);
