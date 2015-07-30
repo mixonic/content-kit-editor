@@ -5,6 +5,7 @@ import { POST_TYPE } from "../models/post";
 import { MARKUP_SECTION_TYPE } from "../models/markup-section";
 import { MARKER_TYPE } from "../models/marker";
 import { IMAGE_SECTION_TYPE } from "../models/image";
+import { CARD_TYPE } from "../models/card";
 import { clearChildNodes } from '../utils/dom-utils';
 
 export const UNPRINTABLE_CHARACTER = "\u200C";
@@ -158,7 +159,7 @@ class Visitor {
     }
   }
 
-  card(renderNode, section) {
+  [CARD_TYPE](renderNode, section) {
     const card = detect(this.cards, card => card.name === section.name);
 
     const env = { name: section.name };
@@ -215,7 +216,7 @@ let destroyHooks = {
     renderNode.element.parentNode.removeChild(renderNode.element);
   },
 
-  card(renderNode, section) {
+  [CARD_TYPE](renderNode, section) {
     if (renderNode.cardNode) {
       renderNode.cardNode.teardown();
     }
@@ -252,33 +253,30 @@ function lookupNode(renderTree, parentNode, postNode, previousNode) {
   }
 }
 
-function renderInternal(renderTree, visitor) {
-  let nodes = [renderTree.node];
-  function visit(parentNode, postNodes, visitAll=false) {
+export default class Renderer {
+  constructor(cards, unknownCardHandler, options) {
+    this.visitor = new Visitor(cards, unknownCardHandler, options);
+    this.nodes = [];
+  }
+
+  visit(renderTree, parentNode, postNodes, visitAll=false) {
     let previousNode;
     postNodes.forEach(postNode => {
       let node = lookupNode(renderTree, parentNode, postNode, previousNode);
       if (node.isDirty || visitAll) {
-        nodes.push(node);
+        this.nodes.push(node);
       }
       previousNode = node;
     });
   }
-  let node = nodes.shift();
-  while (node) {
-    removeChildren(node);
-    visitor[node.postNode.type](node, node.postNode, visit);
-    node.markClean();
-    node = nodes.shift();
-  }
-}
-
-export default class Renderer {
-  constructor(cards, unknownCardHandler, options) {
-    this.visitor = new Visitor(cards, unknownCardHandler, options);
-  }
 
   render(renderTree) {
-    renderInternal(renderTree, this.visitor);
+    let node = renderTree.node;
+    while (node) {
+      removeChildren(node);
+      this.visitor[node.postNode.type](node, node.postNode, (...args) => this.visit(renderTree, ...args));
+      node.markClean();
+      node = this.nodes.shift();
+    }
   }
 }
