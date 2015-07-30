@@ -292,9 +292,27 @@ class Editor {
     //   * offset is 0 and there is no previous marker
 
     const currentMarker = leftRenderNode.postNode;
+    let nextCursorRenderNode  = leftRenderNode,
+        nextCursorOffset = leftOffset - 1;
+
     if (leftOffset !== 0) {
       currentMarker.deleteValueAtOffset(leftOffset-1);
-      leftRenderNode.markDirty();
+      if (currentMarker.length === 0 && currentMarker.section.markers.length > 1) {
+        leftRenderNode.scheduleForRemoval();
+
+        let isFirstRenderNode = leftRenderNode === leftRenderNode.parentNode.firstChild;
+        if (isFirstRenderNode) {
+          // move cursor to start of next node
+          nextCursorRenderNode = leftRenderNode.nextSibling;
+          nextCursorOffset = 0;
+        } else {
+          // move cursor to end of prev node
+          nextCursorRenderNode = leftRenderNode.previousSibling;
+          nextCursorOffset = leftRenderNode.previousSibling.postNode.length;
+        }
+      } else {
+        leftRenderNode.markDirty();
+      }
     } else {
       let previousMarker = currentMarker.previousSibling;
       if (previousMarker) {
@@ -305,7 +323,7 @@ class Editor {
 
     this.rerender();
 
-    this.cursor.moveToNode(leftRenderNode.element, leftOffset-1);
+    this.cursor.moveToNode(nextCursorRenderNode.element, nextCursorOffset);
 
     this.trigger('update');
     event.preventDefault();

@@ -5,6 +5,7 @@ import { POST_TYPE } from "../models/post";
 import { MARKUP_SECTION_TYPE } from "../models/markup-section";
 import { MARKER_TYPE } from "../models/marker";
 import { IMAGE_SECTION_TYPE } from "../models/image";
+import { clearChildNodes } from '../utils/dom-utils';
 
 export const UNPRINTABLE_CHARACTER = "\u200C";
 
@@ -18,10 +19,13 @@ function createElementFromMarkup(doc, markup) {
   return element;
 }
 
+// ascends from element upward, returning the last parent node that is not
+// parentElement
 function penultimateParentOf(element, parentElement) {
   while (parentElement &&
          element.parentNode !== parentElement &&
-         element.parentElement !== document.body) {
+         element.parentElement !== document.body // ensure the while loop stops
+        ) {
     element = element.parentNode;
   }
   return element;
@@ -37,7 +41,7 @@ function isEmptyText(text) {
   return text.trim() === '';
 }
 
-// pass in a renderNode's previousSiblin
+// pass in a renderNode's previousSibling
 function getNextMarkerElement(renderNode) {
   let element = renderNode.element.parentNode;
   let closedCount = renderNode.postNode.closedMarkups.length;
@@ -111,20 +115,16 @@ class Visitor {
       }
       renderNode.element = element;
     }
+
+    // remove all elements so that we can rerender
+    clearChildNodes(renderNode.element);
+
     const visitAll = true;
     visit(renderNode, section.markers, visitAll);
   }
 
   [MARKER_TYPE](renderNode, marker) {
     let parentElement;
-
-    // delete previously existing element
-    if (renderNode.element) {
-      const elementForRemoval = penultimateParentOf(renderNode.element, renderNode.attachedTo);
-      if (elementForRemoval.parentNode) {
-        elementForRemoval.parentNode.removeChild(elementForRemoval);
-      }
-    }
 
     if (renderNode.previousSibling) {
       parentElement = getNextMarkerElement(renderNode.previousSibling);
@@ -133,7 +133,6 @@ class Visitor {
     }
     let textNode = renderMarker(marker, parentElement, renderNode.previousSibling);
 
-    renderNode.attachedTo = parentElement;
     renderNode.element = textNode;
   }
 
@@ -226,6 +225,7 @@ let destroyHooks = {
   }
 };
 
+// removes children from parentNode that are scheduled for removal
 function removeChildren(parentNode) {
   let child = parentNode.firstChild;
   while (child) {
