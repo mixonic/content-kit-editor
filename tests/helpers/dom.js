@@ -46,7 +46,7 @@ function triggerEvent(node, eventType) {
 
   let clickEvent = document.createEvent('MouseEvents');
   clickEvent.initEvent(eventType, true, true);
-  node.dispatchEvent(clickEvent);
+  return node.dispatchEvent(clickEvent);
 }
 
 function createKeyEvent(eventType, keyCode) {
@@ -76,7 +76,7 @@ function createKeyEvent(eventType, keyCode) {
 
 function triggerKeyEvent(node, eventType, keyCode=KEY_CODES.ENTER) {
   let oEvent = createKeyEvent(eventType, keyCode);
-  node.dispatchEvent(oEvent);
+  return node.dispatchEvent(oEvent);
 }
 
 function _buildDOM(tagName, attributes={}, children=[]) {
@@ -104,6 +104,15 @@ function makeDOM(tree) {
   return tree(_buildDOM);
 }
 
+// returns the node and the offset that the cursor is on
+function getCursorPosition() {
+  const selection = window.getSelection();
+  return {
+    node:   selection.anchorNode,
+    offset: selection.anchorOffset
+  };
+}
+
 export default {
   moveCursorTo,
   selectText,
@@ -111,5 +120,6 @@ export default {
   triggerEvent,
   triggerKeyEvent,
   makeDOM,
-  KEY_CODES
+  KEY_CODES,
+  getCursorPosition
 };

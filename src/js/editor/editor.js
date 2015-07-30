@@ -279,8 +279,36 @@ class Editor {
     this._renderer.render(this._renderTree);
   }
 
-  handleDeletion() {
-    return;
+  handleDeletion(event) {
+    let {
+      leftRenderNode,
+      leftOffset
+    } = this.cursor.offsets;
+
+    // need to handle these cases:
+    // when cursor is:
+    //   * in the middle of a marker
+    //   * offset is 0 and there is a previous marker
+    //   * offset is 0 and there is no previous marker
+
+    const currentMarker = leftRenderNode.postNode;
+    if (leftOffset !== 0) {
+      currentMarker.deleteValueAtOffset(leftOffset-1);
+      leftRenderNode.markDirty();
+    } else {
+      let previousMarker = currentMarker.previousSibling;
+      if (previousMarker) {
+        let markerLength = previousMarker.length;
+        previousMarker.deleteValueAtOffset(markerLength - 1);
+      }
+    }
+
+    this.rerender();
+
+    this.cursor.moveToNode(leftRenderNode.element, leftOffset-1);
+
+    this.trigger('update');
+    event.preventDefault();
   }
 
   handleNewline(event) {

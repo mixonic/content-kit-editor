@@ -18,6 +18,15 @@ function createElementFromMarkup(doc, markup) {
   return element;
 }
 
+function penultimateParentOf(element, parentElement) {
+  while (parentElement &&
+         element.parentNode !== parentElement &&
+         element.parentElement !== document.body) {
+    element = element.parentNode;
+  }
+  return element;
+}
+
 function renderMarkupSection(doc, section) {
   var element = doc.createElement(section.tagName);
   section.element = element;
@@ -28,35 +37,48 @@ function isEmptyText(text) {
   return text.trim() === '';
 }
 
-function renderMarker(doc, marker, element) {
+// pass in a renderNode's previousSiblin
+function getNextMarkerElement(renderNode) {
+  let element = renderNode.element.parentNode;
+  let closedCount = renderNode.postNode.closedMarkups.length;
+
+  // walk up the number of closed markups
+  while (closedCount--) {
+    element = element.parentNode;
+  }
+  return element;
+}
+
+function renderMarker(marker, element, previousRenderNode) {
   const openTypes = marker.openedMarkups;
-  let closeTypesLength = marker.closedMarkups.length;
   let text = marker.value;
   if (isEmptyText(text)) {
     // This is necessary to allow the cursor to move into this area
     text = UNPRINTABLE_CHARACTER;
   }
 
-  const textNode = doc.createTextNode(text);
+  let textNode = document.createTextNode(text);
+  let currentElement = textNode;
   let markup;
-  let currentElement = element;
 
-  for (let j=0, m=openTypes.length;j<m;j++) {
+  for (let j=openTypes.length-1;j>=0;j--) {
     markup = openTypes[j];
-    let openedElement = createElementFromMarkup(doc, markup);
-    currentElement.appendChild(openedElement);
+    let openedElement = createElementFromMarkup(document, markup);
+    openedElement.appendChild(currentElement);
     currentElement = openedElement;
   }
 
-  currentElement.appendChild(textNode);
+  if (previousRenderNode) {
+    let nextMarkerElement = getNextMarkerElement(previousRenderNode);
 
-  // walk up the DOM to find the top-level container of this marker.
-  // It will be the node that we `appendChild` the next marker's node onto
-  while (closeTypesLength--) {
-    currentElement = currentElement.parentNode;
+    let previousSibling = previousRenderNode.element;
+    let previousSiblingPenultimate = penultimateParentOf(previousSibling, nextMarkerElement);
+    nextMarkerElement.insertBefore(currentElement, previousSiblingPenultimate.nextSibling);
+  } else {
+    element.insertBefore(currentElement, element.firstChild);
   }
 
-  return { nextElement: currentElement, textNode };
+  return textNode;
 }
 
 class Visitor {
@@ -89,22 +111,29 @@ class Visitor {
       }
       renderNode.element = element;
     }
-    visit(renderNode, section.markers);
+    const visitAll = true;
+    visit(renderNode, section.markers, visitAll);
   }
 
   [MARKER_TYPE](renderNode, marker) {
     let parentElement;
+
+    // delete previously existing element
+    if (renderNode.element) {
+      const elementForRemoval = penultimateParentOf(renderNode.element, renderNode.attachedTo);
+      if (elementForRemoval.parentNode) {
+        elementForRemoval.parentNode.removeChild(elementForRemoval);
+      }
+    }
+
     if (renderNode.previousSibling) {
-      parentElement = renderNode.previousSibling.nextMarkerElement;
+      parentElement = getNextMarkerElement(renderNode.previousSibling);
     } else {
       parentElement = renderNode.parentNode.element;
     }
+    let textNode = renderMarker(marker, parentElement, renderNode.previousSibling);
 
-    // FIXME before we render marker, should delete previous renderNode's element
-    // and up until the next marker element
-    let {nextElement, textNode} = renderMarker(window.document, marker, parentElement);
-
-    renderNode.nextMarkerElement = nextElement;
+    renderNode.attachedTo = parentElement;
     renderNode.element = textNode;
   }
 
@@ -168,7 +197,8 @@ let destroyHooks = {
     // and up until the next marker element
 
     let element = renderNode.element;
-    while (element.parentNode && element.parentNode !== renderNode.nextMarkerElement) {
+    let nextMarkerElement = getNextMarkerElement(renderNode);
+    while (element.parentNode && element.parentNode !== nextMarkerElement) {
       element = element.parentNode;
     }
 
@@ -224,11 +254,11 @@ function lookupNode(renderTree, parentNode, postNode, previousNode) {
 
 function renderInternal(renderTree, visitor) {
   let nodes = [renderTree.node];
-  function visit(parentNode, postNodes) {
+  function visit(parentNode, postNodes, visitAll=false) {
     let previousNode;
     postNodes.forEach(postNode => {
       let node = lookupNode(renderTree, parentNode, postNode, previousNode);
-      if (node.isDirty) {
+      if (node.isDirty || visitAll) {
         nodes.push(node);
       }
       previousNode = node;
