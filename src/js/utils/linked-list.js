@@ -1,83 +1,84 @@
 export default class LinkedList {
-  constructor(options) {
+  constructor(options={adoptItem: () => {}, freeItem: () => {}}) {
     this.head = null;
     this.tail = null;
-    if (options) {
-      let {adoptItem, freeItem} = options;
-      this.adoptItem = adoptItem;
-      this.freeItem = freeItem;
-    }
+    this.adoptItem = options.adoptItem;
+    this.freeItem = options.freeItem;
   }
   prepend(item) {
-    this.insertBefore(item, this.head);
+    this.adoptItem(item);
+
+    if (this.head) {
+      this.insertBefore(item, this.head);
+    } else {
+      this.head = item;
+      this.tail = item;
+      item.prev = null;
+      item.next = null;
+    }
   }
   append(item) {
-    this.insertBefore(item, null);
-  }
-  insertAfter(item, prevItem) {
-    let nextItem = null;
-    if (prevItem) {
-      nextItem = prevItem.next;
-    }
-    this.insertBefore(item, nextItem);
-  }
-  insertBefore(item, nextItem) {
-    this.remove(item);
-    if (this.adoptItem) {
-      this.adoptItem(item);
-    }
-    if (nextItem && nextItem.prev) {
-      // middle of the items
-      let prevItem = nextItem.prev;
-      item.next = nextItem;
-      nextItem.prev = item;
-      item.prev = prevItem;
-      prevItem.next = item;
-    } else if (nextItem) {
-      // first item
-      if (this.head === nextItem) {
-        item.next = nextItem;
-        nextItem.prev = item;
-      } else {
-        this.tail = item;
-      }
-      this.head = item;
+    this.adoptItem(item);
+
+    if (this.tail) {
+      this.insertAfter(item, this.tail);
     } else {
-      // last item
-      if (this.tail) {
-        item.prev = this.tail;
-        this.tail.next = item;
-      }
-      if (!this.head) {
-        this.head = item;
-      }
-      this.tail = item;
+      this.prepend(item);
     }
+  }
+  insertAfter(newItem, oldItem) {
+    this.adoptItem(newItem);
+
+    if (!oldItem) {
+      this.append(newItem);
+      return;
+    }
+
+    newItem.prev = oldItem;
+    newItem.next = oldItem.next;
+
+    if (oldItem.next) {
+      oldItem.next.prev = newItem;
+    } else {
+      this.tail = newItem;
+    }
+
+    oldItem.next = newItem;
+  }
+  insertBefore(newItem, oldItem) {
+    this.adoptItem(newItem);
+
+    if (!oldItem) {
+      this.prepend(newItem);
+      return;
+    }
+
+    newItem.prev = oldItem.prev;
+    newItem.next = oldItem;
+
+    if (oldItem.prev) {
+      oldItem.prev.next = newItem;
+    } else {
+      this.head = newItem;
+    }
+
+    oldItem.prev = newItem;
   }
   remove(item) {
-    if (this.freeItem) {
-      this.freeItem(item);
-    }
-    if (item.next && item.prev) {
-      // Middle of the list
-      item.next.prev = item.prev;
+    this.freeItem(item);
+
+    if (item.prev) {
       item.prev.next = item.next;
     } else {
-      if (item === this.head) {
-        // Head of the list
-        if (item.next) {
-          item.next.prev = null;
-        }
-        this.head = item.next;
-      }
-      if (item === this.tail) {
-        // Tail of the list
-        if (item.prev) {
-          item.prev.next = null;
-        }
-        this.tail = item.prev;
-      }
+      this.head = item.next;
     }
+
+    if (item.next) {
+      item.next.prev = item.prev;
+    } else {
+      this.tail = item.prev;
+    }
+
     item.prev = null;
     item.next = null;
   }
