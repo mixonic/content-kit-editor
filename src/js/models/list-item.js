@@ -1,11 +1,26 @@
 import Section from './markup-section';
+import LinkedList from '../utils/linked-list';
 
 export const LIST_ITEM_TYPE = 'list-item';
 
 export default class ListItem extends Section {
   constructor(tagName, markers=[]) {
-    super(tagName, markers);
+    super(tagName);
     this.type = LIST_ITEM_TYPE;
+
+    this.markers = new LinkedList({
+      adoptItem: m => {
+        m.parent = this;
+        Object.defineProperty(m, 'section', {
+          get: () => {
+            console.log('returning section for marker:',this.section);
+            return this.section;
+          }
+        });
+      },
+      freeItem: m => m.parent = m.section = null
+    });
+    markers.forEach(m => this.markers.append(m));
   }
 
   splitAtMarker(marker, offset=0) {

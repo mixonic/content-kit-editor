@@ -116,6 +116,28 @@ export default class Section extends LinkedItem {
     return {marker:currentMarker, offset:currentOffset};
   }
 
+  offsetOfMarker({marker, offset}) {
+    let foundMarker = false;
+    let offsetInSection = 0;
+    let currentMarker = this.markers.head;
+    var length;
+    while (currentMarker && !foundMarker) {
+      length = currentMarker.length;
+      if (currentMarker === marker) {
+        foundMarker = true;
+        length = offset;
+      }
+
+      offsetInSection += length;
+      currentMarker = currentMarker.next;
+    }
+
+    if (!foundMarker) {
+      throw new Error('marker passed to offsetOfMarker not found in section');
+    }
+    return offsetInSection;
+  }
+
   // mutates this by appending the other section's (cloned) markers to it
   join(otherSection) {
     let beforeMarker = this.markers.tail;
@@ -143,7 +165,7 @@ export default class Section extends LinkedItem {
   markersFor(headOffset, tailOffset) {
     let markers = [];
     let adjustedHead = 0, adjustedTail = 0;
-    this.markers.forEach(m => {
+    this.forEachMarker(m => {
       adjustedTail += m.length;
 
       if (adjustedTail > headOffset && adjustedHead < tailOffset) {
@@ -157,5 +179,12 @@ export default class Section extends LinkedItem {
       adjustedHead += m.length;
     });
     return markers;
+  }
+
+  // FIXME: Intent here is that there is some way to talk the markers regardless
+  // of how they are organized on the section. Matt wants it to only walk the
+  // node necessary, Cory wants it to be more ergonomic. CODE BATTLE!!!
+  forEachMarker(callback) {
+    this.markers.forEach(callback);
   }
 }

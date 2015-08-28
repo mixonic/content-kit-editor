@@ -57,4 +57,65 @@ export default class ListSection extends Section {
 
     return [prevListSection, newSection, nextListSection];
   }
+
+  markerPositionAtOffset(offset) {
+    let currentOffset = 0;
+    let currentMarker;
+    let remaining = offset;
+    this.items.detect((item) => {
+      return item.markers.detect((marker) => {
+        currentOffset = Math.min(remaining, marker.length);
+        remaining -= currentOffset;
+        if (remaining === 0) {
+          currentMarker = marker;
+          return true; // break out of detect
+        }
+      });
+    });
+
+    return {marker:currentMarker, offset:currentOffset};
+  }
+
+  offsetOfListItem({listItem, offset}) {
+    let offsetInSection = 0;
+    const item = this.items.detect(i => {
+      if (i !== listItem) {
+        offsetInSection += i.text.length;
+      } else if (i === listItem) {
+        offsetInSection += offset;
+        return true;
+      }
+    });
+    if (!item) {
+      throw new Error('could not find offsetOfListItem for listItem');
+    }
+
+    return offsetInSection;
+  }
+
+  offsetOfMarker({marker, offset}) {
+    let foundMarker = false;
+    let offsetInSection = 0;
+    let currentMarker = this.items.head.markers.head;
+    var length;
+    while (currentMarker && !foundMarker) {
+      length = currentMarker.length;
+      if (currentMarker === marker) {
+        foundMarker = true;
+        length = offset;
+      }
+
+      offsetInSection += length;
+      if (currentMarker.next) {
+        currentMarker = currentMarker.next;
+      } else if (currentMarker.parent.next) {
+        currentMarker = currentMarker.parent.next.markers.head;
+      }
+    }
+
+    if (!foundMarker) {
+      throw new Error('marker passed to offsetOfMarker not found in section');
+    }
+    return offsetInSection;
+  }
 }

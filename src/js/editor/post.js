@@ -244,7 +244,7 @@ class PostEditor {
    */
   _deleteForwardFrom({marker, offset}) {
     const nextCursorSection = marker.section,
-          nextCursorOffset = marker.offsetInParent(offset);
+          nextCursorOffset = nextCursorSection.offsetOfMarker({marker,offset});
 
     if (offset === marker.length) {
       const nextMarker = marker.next;
@@ -299,7 +299,7 @@ class PostEditor {
    */
   _deleteBackwardFrom({marker, offset}) {
     let nextCursorSection = marker.section,
-        nextCursorOffset = marker.offsetInParent(offset);
+        nextCursorOffset = nextCursorSection.offsetOfMarker({marker,offset});
 
     if (offset === 0) {
       const prevMarker = marker.prev;
@@ -328,7 +328,8 @@ class PostEditor {
             nextCursorSection = prevSection;
 
             if (beforeMarker) {
-              nextCursorOffset = beforeMarker.offsetInParent(beforeMarker.length);
+              nextCursorOffset = nextCursorSection.offsetOfMarker(
+                {marker: beforeMarker, offset: beforeMarker.length});
             } else {
               nextCursorOffset = 0;
             }
