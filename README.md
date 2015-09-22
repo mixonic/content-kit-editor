@@ -60,6 +60,8 @@ editor.render(element);
   current post with their cursor. Programmatic edits are still allowed.
 * `editor.enableEditing()` - allow the user to make direct edits directly
   to a post's text.
+* `editor.detectRangeMarkup()` - find a markup occurance inside a range (often
+  via a selection).
 
 ### Editor Lifecycle Hooks
 
