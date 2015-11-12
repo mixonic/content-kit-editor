@@ -132,10 +132,17 @@ It is important that you make changes to posts, sections, and markers through
 the `run` and `postEditor` API. This API allows the Mobiledoc editor to conserve
 and better understand changes being made to the post.
 
+```js
+editor.run(postEditor => {
+  const mention = postEditor.builder.createAtom("mention", "John Doe", { id: 42 });
+  postEditor.insertAtom(mention);
+});
+```
+
 For more details on the API of `postEditor`, see the [API documentation](https://github.com/bustlelabs/mobiledoc-kit/blob/master/src/js/editor/post.js).
 
 For more details on the API for the builder, required to create new sections
-and markers, see the [builder API](https://github.com/bustlelabs/mobiledoc-kit/blob/master/src/js/models/post-node-builder.js).
+atoms, and markers, see the [builder API](https://github.com/bustlelabs/mobiledoc-kit/blob/master/src/js/models/post-node-builder.js).
 
 ### Configuring hot keys
 
