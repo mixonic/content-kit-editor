@@ -135,7 +135,11 @@ and better understand changes being made to the post.
 ```js
 editor.run(postEditor => {
   const mention = postEditor.builder.createAtom("mention", "John Doe", { id: 42 });
-  postEditor.insertAtom(mention);
+  // insert at current cursor position:
+  // or should the user have to grab the current position from the editor first?
+  postEditor.insert(mention);
+  // or specify a different position:
+  postEditor.insert(mention, position);
 });
 ```
 
