@@ -99,6 +99,24 @@ the start of the `value` text. As these tags are opened, then create a stack
 of opened markups. The `numberOfClosedMarkups` says how many markups should
 be closed at the end of a `value`.
 
+Text sections may contain [ATOMS](ATOMS.md) and markups.
+
+
+```
+{
+  version: "0.3",
+  sections: [[
+    ["b"],                                ──── Bold Markup at index 0
+    ["i"],                                ──── Italic Markup at index 1
+    ["atom", "mention"]                   ──── Mention Atom at index 2
+  ],[
+    [[2], 0, { name: "Bob"}],             ──── Mention Atom with payload
+    [[1], 0, "Example opening i tag"],
+    [[2], 1, { name: "Jane"}],            ──── Mention Atom with payload, closes i tag
+  ]]
+}
+```
+
 **Card Section**
 
 ```
