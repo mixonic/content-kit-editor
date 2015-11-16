@@ -74,24 +74,30 @@ Markups have a tagName, and optionally an array of `attributeName, attributeValu
 
 **Atom definition signature**
 
+Atoms have a name, text value and arbitrary payload.
+
 ```
 {
   version: "0.3",
   atoms: [
-    [atomName],                           ──── Atom
-    ['mention']                           ──── Example 'mention' atom
+    [atomName, atomText, atomPayload],    ──── Atom
+    ['mention', '@bob', { id: 42 }]       ──── Example 'mention' atom
   ]
 }
 ```
 
 **Card definition signature**
 
+Atoms have a name and arbitrary payload.
+
 ```
 {
   version: "0.3",
   cards: [
-    [cardName],                         ──── Card
-    ['image']                           ──── Example 'image' card
+    [cardName, cardPayload],            ──── Card
+    ['image', {                         ──── Example 'image' card
+      src: 'http://google.com/logo.png'
+    }]
   ]
 }
 ```
@@ -108,7 +114,8 @@ Text sections, in addition to plain text, can include markups and atoms.
     ["i"]                                 ──── Markup at index 1
   ],
   atoms: [
-    ["mention"]                           ──── Atom at index 0
+    ["mention", "@bob", { id: 42 }]       ──── mention Atom at index 0
+    ["mention", "@tom", { id: 12 }]       ──── mention Atom at index 1
   ]
   sections: [
     [sectionTypeIdentifier, tagName, markers],   ──── sectionTypeIdentifier for text sections
@@ -125,8 +132,9 @@ Text sections, in addition to plain text, can include markups and atoms.
       [0, [], 1, "Example closing b tag"],
     ]],
     [1, "p", [
-      [textTypeIdentifier, atomTypeIndex, text, atomPayload],
-      [1, 0, "John Doe", { id: 42 }]      ──── textTypeIdentifier for atom is always 0
+      [textTypeIdentifier, atomIndex],           ──── textTypeIdentifier for atom is always 1
+      [1, 0]                                     ──── mention atom at index 0 (@bob)
+      [1, 1]                                     ──── mention atom at index 1 (@tom)
     ]],
   ]
 }
@@ -151,11 +159,11 @@ value of the atom will be rendered as plain text as a fallback.
 {
   version: "0.3",
   cards: [
-    "card-name"
+    ["card-name", { cardPayload }]
   ],
   sections: [
-    [typeIdentifier, tagName, markers],   ──── typeIdentifier for card sections
-    [10, 0, cardPayload]                       is always 10.
+    [typeIdentifier, cardIndex],                 ──── typeIdentifier for card sections
+    [10, 0]                                           is always 10.
   ]
 }
 ```
