@@ -22,115 +22,141 @@ prescription for output display.
 Often Mobiledoc will be used with one or more of:
 
 * [Mobiledoc Kit](https://github.com/bustlelabs/mobiledoc-kit) to author an editor
-  * [Ember Mobiledoc Editor](https://github.com/bustlelabs/ember-mobiledoc-editor) is one such editor 
+  * [Ember Mobiledoc Editor](https://github.com/bustlelabs/ember-mobiledoc-editor) is one such editor
 * [Mobiledoc DOM Renderer](https://github.com/bustlelabs/mobiledoc-dom-renderer)
 * [Mobiledoc HTML Renderer](https://github.com/bustlelabs/mobiledoc-html-renderer)
 * [Mobiledoc Text Renderer](https://github.com/bustlelabs/mobiledoc-text-renderer)
 
 ## Specification
 
-Mobiledoc consists of a wrapping object and nested array of section data. Using
-arrays makes Mobiledocs each to render quickly.
+Mobiledoc consists of a wrapping object, type definitions for markup, atoms and cards,
+and an array of section data. Using arrays makes Mobiledocs each to render quickly.
 
 The wrapper signature:
 
 ```
 {
-  version: "0.1",                         ──── Versioning information
-  sections: [
-    [                                     ──── List of markup types.
-      markup,
-      markup
-    ],
-    [                                     ──── List of sections.
-      section,
-      section,
-      section
-    ]
+  version: "0.3",                         ──── Versioning information
+  markups: [                              ──── List of markup types
+    markup,
+    markup
+  ],
+  atoms: [                                ──── List of atom types
+    atom,
+    atom
+  ],
+  cards: [                                ──── List of card types
+    card,
+    card
+  ],
+  sections: [                             ──── List of sections.
+    section,
+    section,
+    section
   ]
 }
 ```
 
-**Markup signature**
+**Markup definition signature**
+
+Markups have a tagName, and optionally an array of `attributeName, attributeValue]` pairs
 
 ```
 {
-  version: "0.1",
-  sections: [
+  version: "0.3",
+  markups: [
     [tagName, optionalAttributes],        ──── Markup
     ['em'],                               ──── Example simple markup
     ['a', ['href', 'http://google.com']], ──── Example markup with attributes
-  ],[
-    // ...
-  ]]
+  ]
+}
+```
+
+**Atom definition signature**
+
+```
+{
+  version: "0.3",
+  atoms: [
+    [atomName],                           ──── Atom
+    ['mention']                           ──── Example 'mention' atom
+  ]
+}
+```
+
+**Card definition signature**
+
+```
+{
+  version: "0.3",
+  cards: [
+    [cardName],                         ──── Card
+    ['image']                           ──── Example 'image' card
+  ]
 }
 ```
 
 **Text Section**
 
+Text sections, in addition to plain text, can include markups and atoms.
+
 ```
 {
-  version: "0.1",
-  sections: [[
+  version: "0.3",
+  markups: [
     ["b"],                                ──── Markup at index 0
     ["i"]                                 ──── Markup at index 1
-  ],[
-    [typeIdentifier, tagName, markers],   ──── typeIdentifier for text sections
-    [1, "h2", [                                is always 1.
-      [[], 0, "Simple h2 example"],
+  ],
+  atoms: [
+    ["mention"]                           ──── Atom at index 0
+  ]
+  sections: [
+    [sectionTypeIdentifier, tagName, markers],   ──── sectionTypeIdentifier for text sections
+    [1, "h2", [                                       is always 1.
+      [0, [], 0, "Simple h2 example"],
     ]],
     [1, "p", [
-      [openMarkupsIndexes, numberOfClosedMarkups, value],
-      [[], 0, "Example with no markup"],
-      [[0], 1, "Example wrapped in b tag"],
-      [[1], 0, "Example opening i tag"],
-      [[], 1, "Example closing i tag"],
-      [[1, 0], 1, "Example opening i tag and b tag, closing b tag"],
-      [[], 1, "Example closing b tag"]
-    ]]
-  ]]
+      [textTypeIdentifier, openMarkupsIndexes, numberOfClosedMarkups, value],
+      [0, [], 0, "Example with no markup"],      ──── textTypeIdentifier for markup is always 0
+      [0, [0], 1, "Example wrapped in b tag"],
+      [0, [1], 0, "Example opening i tag"],
+      [0, [], 1, "Example closing i tag"],
+      [0, [1, 0], 1, "Example opening i tag and b tag, closing b tag"],
+      [0, [], 1, "Example closing b tag"],
+    ]],
+    [1, "p", [
+      [textTypeIdentifier, atomTypeIndex, text, atomPayload],
+      [1, 0, "John Doe", { id: 42 }]      ──── textTypeIdentifier for atom is always 0
+    ]],
+  ]
 }
 ```
 
-The first item in the `sections` array is a list of markups. Markups have
-a tagName, and optionally an array of `attributeName, attributeValue]` pairs.
 The index in `openMarkupsIndex` specifies which markups should be opened at
 the start of the `value` text. As these tags are opened, then create a stack
 of opened markups. The `numberOfClosedMarkups` says how many markups should
 be closed at the end of a `value`.
 
-Text sections may contain [ATOMS](ATOMS.md) and markups. Atoms are self closing,
-and so the `numberOfClosedMarkups` will always be 0. Atoms have an additional
-`payload` entry in the array:
+In addition to markups, text sections may contain [ATOMS](ATOMS.md).
+Atoms have a `textTypeIdentifier` of 1 and contain a `atomTypeIndex`, text content
+and an `atomPayload` object which is arbitrary and passed through to the atom's
+implementation.
 
-```
-{
-  version: "0.3",
-  sections: [[
-    ["b"],                                ──── Bold Markup at index 0
-    ["i"],                                ──── Italic Markup at index 1
-    ["atom", "mention"]                   ──── Mention Atom at index 2
-  ],[
-    [openMarkupsIndexes, numberOfClosedMarkups, value, payload],
-    [[2], 0, "Bob", { id: 42 }],          ──── Mention Atom with payload
-    [[1], 0, "Example opening i tag"],
-    [[2], 1, "Jane", { id: 12 }],         ──── Mention Atom with payload, closes i tag
-  ]]
-}
-```
-
-If an atom is present in Mobiledoc, but no atom class is registered, then the text
-value of the atom will be rendered as plain text.
+If an atom is present in Mobiledoc, but no atom implementation is registered, then the text
+value of the atom will be rendered as plain text as a fallback.
 
 **Card Section**
 
 ```
 {
-  version: "0.1",
-  sections: [[],[
+  version: "0.3",
+  cards: [
+    "card-name"
+  ],
+  sections: [
     [typeIdentifier, tagName, markers],   ──── typeIdentifier for card sections
-    [10, "card-name", cardPayload]             is always 10.
-  ]]
+    [10, 0, cardPayload]                       is always 10.
+  ]
 }
 ```
 
