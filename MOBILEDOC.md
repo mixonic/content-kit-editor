@@ -102,9 +102,9 @@ Atoms have a name and arbitrary payload.
 }
 ```
 
-**Text Section**
+**Markup Section**
 
-Text sections, in addition to plain text, can include markups and atoms.
+Markup sections, in addition to plain text, can include markups and atoms.
 
 ```
 {
@@ -118,7 +118,7 @@ Text sections, in addition to plain text, can include markups and atoms.
     ["mention", "@tom", { id: 12 }]       ──── mention Atom at index 1
   ]
   sections: [
-    [sectionTypeIdentifier, tagName, markers],   ──── sectionTypeIdentifier for text sections
+    [sectionTypeIdentifier, tagName, markers],   ──── sectionTypeIdentifier for markup sections
     [1, "h2", [                                       is always 1.
       [0, [], 0, "Simple h2 example"],
     ]],
@@ -145,7 +145,7 @@ the start of the `value` text. As these tags are opened, then create a stack
 of opened markups. The `numberOfClosedMarkups` says how many markups should
 be closed at the end of a `value`.
 
-In addition to markups, text sections may contain [ATOMS](ATOMS.md).
+In addition to markups, markup sections may contain [ATOMS](ATOMS.md).
 Atoms have a `textTypeIdentifier` of 1 and contain a `atomTypeIndex`, text content
 and an `atomPayload` object which is arbitrary and passed through to the atom's
 implementation.
