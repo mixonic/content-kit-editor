@@ -27,8 +27,7 @@ export default class AtomNode {
 
   get env() {
     return {
-      name: this.atom.name,
-      model: this.model
+      name: this.atom.name
     };
   }
 
