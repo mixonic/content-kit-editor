@@ -181,13 +181,41 @@ test('renders a post with atom', (assert) => {
   render(renderTree, [], [
     {
       name: 'mention',
-      render({fragment, text/*, options, env, payload*/}) {
-        let textNode = document.createTextNode(text);
+      render({fragment, value/*, options, env, payload*/}) {
+        let textNode = document.createTextNode(value);
         fragment.appendChild(textNode);
       }
     }
   ]);
   assert.equal(renderTree.rootElement.innerHTML, `<p><span class="-mobiledoc-kit__atom">@bob</span></p>`);
+});
+
+test('renders a post with mixed markups and atoms', (assert) => {
+  let post = Helpers.postAbstract.build(({ markupSection, post, atom, marker, markup }) => {
+    let b = markup('B');
+    let i = markup('I');
+
+    return post([markupSection('p', [
+      marker('bold', [b]),
+      marker('italic ', [b, i]),
+      atom('mention', '@bob', {}, [b, i]),
+      marker(' bold', [b]),
+      builder.createMarker('text.')
+    ])]);
+  });
+
+  const renderTree = new RenderTree(post);
+  render(renderTree, [], [
+    {
+      name: 'mention',
+      render({fragment, value/*, options, env, payload*/}) {
+        let textNode = document.createTextNode(value);
+        fragment.appendChild(textNode);
+      }
+    }
+  ]);
+
+  assert.equal(renderTree.rootElement.innerHTML, `<p><b>bold<i>italic <span class="-mobiledoc-kit__atom">@bob</span></i> bold</b>text.</p>`);
 });
 
 test('renders a card section', (assert) => {

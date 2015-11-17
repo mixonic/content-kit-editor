@@ -19,7 +19,7 @@ export default class AtomNode {
     this._teardown = this.atom.render({
       options: this.atomOptions,
       env: this.env,
-      text: this.model.text,
+      value: this.model.value,
       payload: this.model.payload,
       fragment
     });
