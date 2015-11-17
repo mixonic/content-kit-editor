@@ -37,7 +37,7 @@ function postEditorWithMobiledoc(treeFn) {
 
 function renderBuiltAbstract(post) {
   mockEditor.post = post;
-  let renderer = new EditorDomRenderer(mockEditor, [], () => {}, {});
+  let renderer = new EditorDomRenderer(mockEditor, [], [], () => {}, {});
   let renderTree = new RenderTree(post);
   renderer.render(renderTree);
   return mockEditor;
@@ -913,7 +913,7 @@ test('moveSectionDown moves it down', (assert) => {
   assert.equal(post.sections.tail, movedSection, 'movedSection is returned');
   assert.equal(tailSection.name, 'listicle-card',
                'moveSectionDown is no-op when card is at bottom');
- 
+
 });
 
 test('#insertPost single section, insert at start', (assert) => {

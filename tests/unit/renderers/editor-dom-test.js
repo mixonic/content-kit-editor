@@ -10,9 +10,9 @@ const ZWNJ = '\u200c';
 import placeholderImageSrc from 'mobiledoc-kit/utils/placeholder-image-src';
 let builder;
 
-function render(renderTree, cards=[]) {
+function render(renderTree, cards=[], atoms=[]) {
   let editor = {};
-  let renderer = new Renderer(editor, cards);
+  let renderer = new Renderer(editor, cards, atoms);
   return renderer.render(renderTree);
 }
 
@@ -172,6 +172,27 @@ test('renders a post with image', (assert) => {
   assert.equal(renderTree.rootElement.innerHTML, `<img src="${url}">`);
 });
 
+test('renders a post with atom', (assert) => {
+  let post = builder.createPost();
+  let section = builder.createMarkupSection('P');
+  post.sections.append(section);
+
+  section.markers.append(
+    builder.createAtom('mention', '@bob', {})
+  );
+
+  const renderTree = new RenderTree(post);
+  render(renderTree, [], [
+    {
+      name: 'mention',
+      render({element, text/*, options, env, payload*/}) {
+        element.innerHTML = text;
+      }
+    }
+  ]);
+  assert.equal(renderTree.rootElement.innerHTML, `<p><span class="ck-atom">@bob</span></p>`);
+});
+
 test('renders a card section', (assert) => {
   let post = builder.createPost();
   let cardSection = builder.createCardSection('my-card');
@@ -215,9 +236,9 @@ test('renders a card section', (assert) => {
  *    section
  *       |
  *       |
- *       |      
+ *       |
  *     marker1 [b]
- *       |       
+ *       |
  *     <text1> + <text2>
  */
 
@@ -408,7 +429,7 @@ test('contiguous markers have overlapping markups', (assert) => {
 });
 
 test('renders and rerenders list items', (assert) => {
-  const post = Helpers.postAbstract.build(({post, listSection, listItem, marker}) => 
+  const post = Helpers.postAbstract.build(({post, listSection, listItem, marker}) =>
     post([
       listSection('ul', [
         listItem([marker('first item')]),
