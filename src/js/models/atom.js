@@ -6,5 +6,6 @@ export default class Atom {
     this.text = text;
     this.payload = payload;
     this.type = ATOM_TYPE;
+    this.length = 1;
   }
 }

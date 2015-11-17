@@ -13,12 +13,13 @@ module('Unit: Atom', {
 });
 
 test('can create an atom with text and payload', (assert) => {
-  const payload = {};
-  const text = 'atom-text';
-  const name = 'atom-name';
-  const atom = builder.createAtom(name, text, payload);
+  let payload = {};
+  let text = 'atom-text';
+  let name = 'atom-name';
+  let atom = builder.createAtom(name, text, payload);
   assert.ok(!!atom, 'creates atom');
   assert.ok(atom.name === name, 'has name');
   assert.ok(atom.text === text, 'has text');
   assert.ok(atom.payload === payload, 'has payload');
+  assert.ok(atom.length === 1, 'has length of 1');
 });
