@@ -191,7 +191,7 @@ test('renders a post with atom', (assert) => {
       }
     }
   ]);
-  assert.equal(renderTree.rootElement.innerHTML, `<p><span class="ck-atom">@bob</span></p>`);
+  assert.equal(renderTree.rootElement.innerHTML, `<p><span class="-mobiledoc-kit__atom">@bob</span></p>`);
 });
 
 test('renders a card section', (assert) => {

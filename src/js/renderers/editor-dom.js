@@ -96,7 +96,7 @@ function renderCard() {
 
 function renderAtom(element, previousRenderNode) {
   let atomElement = document.createElement('span');
-  addClassName(atomElement, 'ck-atom');
+  addClassName(atomElement, '-mobiledoc-kit__atom');
 
   if (previousRenderNode) {
     let previousSibling = previousRenderNode.element;
