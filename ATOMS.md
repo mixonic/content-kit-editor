@@ -9,8 +9,9 @@ An atom is an object with a name, type and render hook:
 export default {
   name: 'mention',
   type: 'dom',
-  render({element, options, env, text, payload}) {
-    element.innerHTML = text;
+  render({fragment, options, env, value, payload}) {
+    let textNode = document.createTextNode(value);
+    fragment.appendChild(textNode);
   }
 };
 ```
@@ -27,9 +28,14 @@ The return value of the `render` hook is a teardown function which will be calle
 export default {
   name: 'mention',
   type: 'dom',
-  render({element, options, env, text, payload}) {
-    element.innerHTML = text;
-    let popOver = new PopOver(element, { url: payload.url });
+  render({fragment, options, env, text, payload}) {
+    let wrapper = document.createElement('span');
+    let textNode = document.createTextNode(text);
+
+    wrapper.appendChild(textNode);
+    fragment.appendChild(wrapper);
+
+    let popOver = new PopOver(wrapper, { url: payload.url });
     return () => {
       popOver.destroy();
     }
@@ -41,11 +47,11 @@ export default {
 
 The `render` hook receives a single object containing:
 
-* `element` is a DOM element for the atom's content to be rendered.
+* `fragment` is a DOM fragment into which the atom's content is to be rendered.
 * `options` is the `cardOptions` argument passed to the editor or renderer.
 * `env` contains information about the running of this hook. It may contain
   the following properties:
   * `env.name` The name of this atom
-* `text` is the textual value used to display to the user.
+* `value` is the textual value used to display to the user.
 * `payload` is the payload for this atom instance. It was either loaded from
   a Mobiledoc or set when the atom was inserted.
