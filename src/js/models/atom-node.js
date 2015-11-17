@@ -28,10 +28,6 @@ export default class AtomNode {
     };
   }
 
-  remove() {
-    // this.editor.run(postEditor => postEditor.removeSection(this.model));
-  }
-
   teardown() {
     // TODO - test if setupResult is a function before calling?
     if (this.setupResult) {
