@@ -173,13 +173,9 @@ test('renders a post with image', (assert) => {
 });
 
 test('renders a post with atom', (assert) => {
-  let post = builder.createPost();
-  let section = builder.createMarkupSection('P');
-  post.sections.append(section);
-
-  section.markers.append(
-    builder.createAtom('mention', '@bob', {})
-  );
+  let post = Helpers.postAbstract.build(({ markupSection, post, atom }) => {
+    return post([markupSection('p', [atom('mention', '@bob', {})])]);
+  });
 
   const renderTree = new RenderTree(post);
   render(renderTree, [], [
