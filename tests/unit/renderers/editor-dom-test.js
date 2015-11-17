@@ -185,8 +185,9 @@ test('renders a post with atom', (assert) => {
   render(renderTree, [], [
     {
       name: 'mention',
-      render({element, text/*, options, env, payload*/}) {
-        element.innerHTML = text;
+      render({fragment, text/*, options, env, payload*/}) {
+        let textNode = document.createTextNode(text);
+        fragment.appendChild(textNode);
       }
     }
   ]);

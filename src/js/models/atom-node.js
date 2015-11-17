@@ -12,13 +12,17 @@ export default class AtomNode {
   render() {
     this.teardown();
 
+    let fragment = document.createDocumentFragment();
+
     this.setupResult = this.atom.render({
-      element: this.element,
       options: this.atomOptions,
       env: this.env,
       text: this.model.text,
-      payload: this.model.payload
+      payload: this.model.payload,
+      fragment
     });
+
+    this.element.appendChild(fragment);
   }
 
   get env() {
