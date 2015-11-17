@@ -1,3 +1,5 @@
+import { clearChildNodes } from '../utils/dom-utils';
+
 export default class AtomNode {
   constructor(editor, atom, model, element, atomOptions) {
     this.editor = editor;
@@ -6,7 +8,7 @@ export default class AtomNode {
     this.atomOptions = atomOptions;
     this.element = element;
 
-    this.setupResult = null;
+    this._teardown = null;
   }
 
   render() {
@@ -14,7 +16,7 @@ export default class AtomNode {
 
     let fragment = document.createDocumentFragment();
 
-    this.setupResult = this.atom.render({
+    this._teardown = this.atom.render({
       options: this.atomOptions,
       env: this.env,
       text: this.model.text,
@@ -32,10 +34,11 @@ export default class AtomNode {
   }
 
   teardown() {
-    // TODO - test if setupResult is a function before calling?
-    if (this.setupResult) {
-      this.setupResult();
+    if (this._teardown) {
+      this._teardown();
     }
+
+    clearChildNodes(this.element);
   }
 
 }
