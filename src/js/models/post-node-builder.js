@@ -1,3 +1,4 @@
+import Atom from '../models/atom';
 import Post from '../models/post';
 import MarkupSection from '../models/markup-section';
 import ListSection from '../models/list-section';
