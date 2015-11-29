@@ -192,11 +192,25 @@ function validateCards(cards=[]) {
   return cards;
 }
 
+function validateAtoms(atoms=[]) {
+  forEach(atoms, atom => {
+    assert(
+      `Atom "${atom.name}" must define type "dom", has: "${atom.type}"`,
+      atom.type === 'dom'
+    );
+    assert(
+      `Card "${atom.name}" must define \`render\` method`,
+      !!atom.render
+    );
+  });
+  return atoms;
+}
+
 class Visitor {
   constructor(editor, cards, atoms, unknownCardHandler, options) {
     this.editor = editor;
     this.cards = validateCards(cards);
-    this.atoms = atoms;
+    this.atoms = validateAtoms(atoms);
     this.unknownCardHandler = unknownCardHandler;
     this.options = options;
   }

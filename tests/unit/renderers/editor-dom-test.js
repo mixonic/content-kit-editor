@@ -181,6 +181,7 @@ test('renders a post with atom', (assert) => {
   render(renderTree, [], [
     {
       name: 'mention',
+      type: 'dom',
       render({fragment, value/*, options, env, payload*/}) {
         let textNode = document.createTextNode(value);
         fragment.appendChild(textNode);
@@ -208,6 +209,7 @@ test('renders a post with mixed markups and atoms', (assert) => {
   render(renderTree, [], [
     {
       name: 'mention',
+      type: 'dom',
       render({fragment, value/*, options, env, payload*/}) {
         let textNode = document.createTextNode(value);
         fragment.appendChild(textNode);
