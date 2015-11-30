@@ -1,57 +1,58 @@
-## Mobiledoc Atoms
+# Mobiledoc Atoms
 
 Atoms are effectively read-only inline cards.
 
-An atom is an object with a name, type and render hook:
+## Atom format
+
+An atom is a javascript object with 3 *required* properties:
+
+  * `name` [string] - The name of this atom in the mobiledoc
+  * `type` [string] - The output of this atom. Valid values are 'dom', 'html', and 'text'
+  * `render` [function] - Invoked by the renderer to render this atom
+
+## Atom rendering
+
+The `render` function on an atom is called by an instance of a renderer and passed an object with the following four properties:
+
+  * `env` [object] - A set of environment-specific properties
+  * `options` [object] - Rendering options that were passed to the renderer (as `cardOptions`) when it was instantiated
+  * `payload` [object] - The data payload for this atom from the mobiledoc
+  * `value` [string] - The textual representation to for this atom
+
+The return value of the `render` function will be inserted by the renderer into the rendered mobiledoc.
+The return value can be null if an atom does not have any output. If there is a return value it
+must be of the correct type (a DOM Node for the dom renderer, a string of html or text for the html or text renderers, respectively).
+
+#### `env`
+
+`env` always has the following properties:
+
+  * `name` [string] - the name of the card
+  * `onTeardown` [function] - The atom can pass a callback function: `onTeardown(callbackFn)`. The callback will be called when the rendered content is torn down.
+
+## Atom Examples
+
+Example dom atom that renders a mention:
 
 ```js
-// package: mda-mention-dom
 export default {
   name: 'mention',
   type: 'dom',
-  render({fragment, options, env, value, payload}) {
-    let textNode = document.createTextNode(value);
-    fragment.appendChild(textNode);
+  render({ env, options, value, payload}) {
+    return document.createTextNode(`@${value}`);
   }
 };
 ```
 
-### Teardown
-
-Mobiledoc-kit will clear the children of a rendered atom, but there may be cases where you wish to manually teardown
-any event listeners attached to the window etc...
-
-The return value of the `render` hook is a teardown function which will be called before the atom is removed from the DOM.
-
+Example dom atom that registers a teardown callback:
 ```js
-// package: mda-mention-dom
-export default {
-  name: 'mention',
-  type: 'dom',
-  render({fragment, options, env, text, payload}) {
-    let wrapper = document.createElement('span');
-    let textNode = document.createTextNode(text);
-
-    wrapper.appendChild(textNode);
-    fragment.appendChild(wrapper);
-
-    let popOver = new PopOver(wrapper, { url: payload.url });
-    return () => {
-      popOver.destroy();
-    }
-  }
+let card = {
+ name: 'atom-with-teardown-callback',
+ type: 'dom',
+ render({env, options, value, payload}) {
+   env.onTeardown(() => {
+    console.log('tearing down atom named: ' + env.name);
+   });
+ }
 };
 ```
-
-### Arguments
-
-The `render` hook receives a single object containing:
-
-* `fragment` is a DOM fragment into which the atom's content is to be rendered.
-* `options` is the `cardOptions` argument passed to the editor or renderer.
-* `env` contains information about the running of this hook. It may contain
-  the following properties:
-  * `env.name` The name of this atom
-* `value` is the textual value used to display to the user.
-* `payload` is the payload for this atom instance. It was either loaded from
-  a Mobiledoc or set when the atom was inserted.

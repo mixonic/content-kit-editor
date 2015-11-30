@@ -14,10 +14,14 @@ supporting rich content via cards.
   platform. Mobiledoc is portable and fast.
 * The editor makes limited use of Content Editable, the siren-song of doomed
   web editor technologies.
-* Mobiledoc is designed for *rich* content. We call these sections of an
-  article "cards", and implementing a new one doesn't require an understanding
-  of Mobiledoc editor internals. Adding a new card takes an afternoon, not several
-  days. To learn more about cards and mobiledoc renderers, see the **[Cards docs](https://github.com/bustlelabs/mobiledoc-kit/blob/master/CARDS.md)**.
+* Mobiledoc is designed for *rich* content. We call rich sections of an
+  article "cards" and rich inline elements "atoms" and implementing a new one doesn't require an understanding
+  of Mobiledoc editor internals. Adding a new atom or card takes an afternoon, not several
+  days. To learn more, see the docs for
+  **[Atoms](https://github.com/bustlelabs/mobiledoc-kit/blob/master/ATOMS.md)**,
+  **[Cards](https://github.com/bustlelabs/mobiledoc-kit/blob/master/CARDS.md)**
+  and
+  **[Mobiledoc Renderers](https://github.com/bustlelabs/mobiledoc-kit/blob/master/RENDERERS.md)**
 
 To learn more about the ideas behind Mobiledoc and the editor (note that the
 editor used to be named Content-Kit), see these blog posts:
@@ -55,7 +59,7 @@ editor.render(element);
 * `spellcheck` - [boolean] whether to enable spellcheck. Defaults to true.
 * `autofocus` - [boolean] When true, focuses on the editor when it is rendered.
 * `cards` - [array] The list of cards that the editor may render
-* `cardOptions` - [object] Options passed to 
+* `cardOptions` - [object] Options passed to
 * `unknownCardHandler` - [function] This will be invoked by the editor-renderer whenever it encounters an unknown card
 
 ### Editor API
