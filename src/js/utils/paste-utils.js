@@ -12,12 +12,13 @@ export function setClipboardCopyData(copyEvent, editor) {
   const mobiledoc = post.cloneRange(range);
 
   let unknownCardHandler = () => {}; // ignore unknown cards
-  let {result: innerHTML } = new HTMLRenderer({unknownCardHandler})
+  let unknownAtomHandler = () => {}; // ignore unknown atoms
+  let {result: innerHTML } = new HTMLRenderer({unknownCardHandler, unknownAtomHandler})
                                      .render(mobiledoc);
 
   const html =
     `<div data-mobiledoc='${JSON.stringify(mobiledoc)}'>${innerHTML}</div>`;
-  const {result: plain} = new TextRenderer({unknownCardHandler})
+  const {result: plain} = new TextRenderer({unknownCardHandler, unknownAtomHandler})
                       .render(mobiledoc);
 
   clipboardData.setData('text/plain', plain);
