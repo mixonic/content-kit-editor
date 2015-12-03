@@ -1,10 +1,11 @@
 import Ember from 'ember';
 import cards from '../mobiledoc-cards/dom';
+import atoms from '../mobiledoc-atoms/dom';
 import Renderer from 'ember-mobiledoc-dom-renderer';
 
 let { run } = Ember;
 
-let renderer = new Renderer({cards});
+let renderer = new Renderer({cards, atoms});
 
 export default Ember.Component.extend({
   didRender() {
