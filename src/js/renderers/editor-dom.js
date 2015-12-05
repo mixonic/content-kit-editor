@@ -99,15 +99,20 @@ function renderAtom(element, previousRenderNode) {
   atomElement.contentEditable = false;
   addClassName(atomElement, '-mobiledoc-kit__atom');
 
+  let wrapper = document.createElement('span');
+  wrapper.appendChild(document.createTextNode('\u200c'));
+  wrapper.appendChild(atomElement);
+  wrapper.appendChild(document.createTextNode('\u200c'));
+
   if (previousRenderNode) {
     let previousSibling = previousRenderNode.element;
     let previousSiblingPenultimate = penultimateParentOf(previousSibling, element);
-    element.insertBefore(atomElement, previousSiblingPenultimate.nextSibling);
+    element.insertBefore(wrapper, previousSiblingPenultimate.nextSibling);
   } else {
-    element.insertBefore(atomElement, element.firstChild);
+    element.insertBefore(wrapper, element.firstChild);
   }
 
-  return atomElement;
+  return { wrapper, atomElement };
 }
 
 function getNextMarkerElement(renderNode) {
@@ -361,8 +366,8 @@ class Visitor {
       parentElement = renderNode.parent.element;
     }
 
-    const {editor, options} = this;
-    const atomElement = renderAtom(parentElement, renderNode.prev);
+    const { editor, options } = this;
+    const { wrapper, atomElement } = renderAtom(parentElement, renderNode.prev);
     const atom = this._findAtom(atomModel.name);
 
     const atomNode = new AtomNode(
@@ -372,7 +377,7 @@ class Visitor {
     atomNode.render();
 
     renderNode.atomNode = atomNode;
-    renderNode.element = atomElement;
+    renderNode.element = wrapper; // NOTE - should this be atomElement, fails tests if so...
   }
 }
 

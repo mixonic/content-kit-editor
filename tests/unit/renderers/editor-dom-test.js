@@ -187,7 +187,7 @@ test('renders a post with atom', (assert) => {
       }
     }
   ]);
-  assert.equal(renderTree.rootElement.innerHTML, `<p><span contenteditable="false" class="-mobiledoc-kit__atom">@bob</span></p>`);
+  assert.equal(renderTree.rootElement.innerHTML, `<p><span>${ZWNJ}<span contenteditable="false" class="-mobiledoc-kit__atom">@bob</span>${ZWNJ}</span></p>`);
 });
 
 test('renders a post with mixed markups and atoms', (assert) => {
@@ -215,7 +215,7 @@ test('renders a post with mixed markups and atoms', (assert) => {
     }
   ]);
 
-  assert.equal(renderTree.rootElement.innerHTML, `<p><b>bold<i>italic <span contenteditable="false" class="-mobiledoc-kit__atom">@bob</span></i> bold</b>text.</p>`);
+  assert.equal(renderTree.rootElement.innerHTML, `<p><b>bold<i>italic <span>${ZWNJ}<span contenteditable="false" class="-mobiledoc-kit__atom">@bob</span>${ZWNJ}</span></i> bold</b>text.</p>`);
 });
 
 test('renders a card section', (assert) => {
