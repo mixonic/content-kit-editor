@@ -1,9 +1,14 @@
 import { forEach } from './array-utils';
 
 const TEXT_NODE_TYPE = 3;
+const ELEMENT_NODE_TYPE = 1;
 
 function isTextNode(node) {
   return node.nodeType === TEXT_NODE_TYPE;
+}
+
+function isElementNode(node) {
+  return node.nodeType === ELEMENT_NODE_TYPE;
 }
 
 // perform a pre-order tree traversal of the dom, calling `callbackFn(node)`
@@ -112,6 +117,7 @@ export {
   addClassName,
   normalizeTagName,
   isTextNode,
+  isElementNode,
   parseHTML,
   findOffsetInElement
 };

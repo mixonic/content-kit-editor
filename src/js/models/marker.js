@@ -13,6 +13,7 @@ const Marker = class Marker extends LinkedItem {
     this.value = value;
     this.markups = [];
     this.type = MARKER_TYPE;
+    this.isMarker = true;
     markups.forEach(m => this.addMarkup(m));
   }
 

@@ -18,6 +18,7 @@ import assert from '../utils/assert';
 
 export const NO_BREAK_SPACE = '\u00A0';
 export const SPACE = ' ';
+export const ATOM_CLASS_NAME = '-mobiledoc-kit__atom';
 
 function createElementFromMarkup(doc, markup) {
   var element = doc.createElement(markup.tagName);
@@ -97,9 +98,9 @@ function renderCard() {
 function renderAtom(element, previousRenderNode) {
   let atomElement = document.createElement('span');
   atomElement.contentEditable = false;
-  addClassName(atomElement, '-mobiledoc-kit__atom');
 
   let wrapper = document.createElement('span');
+  addClassName(wrapper, ATOM_CLASS_NAME);
   wrapper.appendChild(document.createTextNode('\u200c'));
   wrapper.appendChild(atomElement);
   wrapper.appendChild(document.createTextNode('\u200c'));
@@ -377,7 +378,7 @@ class Visitor {
     atomNode.render();
 
     renderNode.atomNode = atomNode;
-    renderNode.element = wrapper; // NOTE - should this be atomElement, fails tests if so...
+    renderNode.element = wrapper;
   }
 }
 

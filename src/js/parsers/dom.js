@@ -1,4 +1,7 @@
-import { NO_BREAK_SPACE } from '../renderers/editor-dom';
+import {
+  NO_BREAK_SPACE,
+  ATOM_CLASS_NAME
+} from '../renderers/editor-dom';
 import {
   MARKUP_SECTION_TYPE,
   LIST_SECTION_TYPE,
@@ -6,6 +9,8 @@ import {
 } from '../models/types';
 import {
   isTextNode,
+  isElementNode,
+  getAttributes,
   normalizeTagName
 } from '../utils/dom-utils';
 import {
@@ -14,7 +19,6 @@ import {
 } from '../utils/array-utils';
 
 import SectionParser from 'mobiledoc-kit/parsers/section';
-import { getAttributes, walkTextNodes } from '../utils/dom-utils';
 import Markup from 'mobiledoc-kit/models/markup';
 
 const GOOGLE_DOCS_CONTAINER_ID_REGEX = /^docs\-internal\-guid/;
@@ -52,6 +56,26 @@ function remapTagName(tagName) {
   let normalized = normalizeTagName(tagName);
   let remapped = TAG_REMAPPING[normalized];
   return remapped || normalized;
+}
+
+function walkMarkerableNodes(parent, callback) {
+  let currentNode = parent;
+
+  if (
+    isTextNode(currentNode) ||
+    (
+      isElementNode(currentNode) &&
+      currentNode.className.indexOf(ATOM_CLASS_NAME) !== -1
+    )
+  ) {
+    callback(currentNode);
+  } else {
+    currentNode = currentNode.firstChild;
+    while (currentNode) {
+      walkMarkerableNodes(currentNode, callback);
+      currentNode = currentNode.nextSibling;
+    }
+  }
 }
 
 /**
@@ -157,30 +181,32 @@ export default class DOMParser {
   }
 
   _reparseSectionContainingMarkers(section, renderTree) {
-    const element = section.renderNode.element;
+    let element = section.renderNode.element;
     let seenRenderNodes = [];
     let previousMarker;
 
-    walkTextNodes(element, (textNode) => {
-      const text = transformHTMLText(textNode.textContent);
-      let markups = this.collectMarkups(textNode, element);
-
+    walkMarkerableNodes(element, (node) => {
+      let text = transformHTMLText(node.textContent);
+      let markups = this.collectMarkups(node, element);
       let marker;
-
-      let renderNode = renderTree.getElementRenderNode(textNode);
+      let renderNode = renderTree.getElementRenderNode(node);
       if (renderNode) {
-        if (text.length) {
+        if (renderNode.postNode.isMarker) {
+          if (text.length) {
+            marker = renderNode.postNode;
+            marker.value = text;
+            marker.markups = markups;
+          } else {
+            renderNode.scheduleForRemoval();
+          }
+        } else if (renderNode.postNode.isAtom) {
           marker = renderNode.postNode;
-          marker.value = text;
-          marker.markups = markups;
-        } else {
-          renderNode.scheduleForRemoval();
         }
       } else {
         marker = this.builder.createMarker(text, markups);
 
         renderNode = renderTree.buildRenderNode(marker);
-        renderNode.element = textNode;
+        renderNode.element = node;
         renderNode.markClean();
 
         let previousRenderNode = previousMarker && previousMarker.renderNode;
@@ -188,7 +214,7 @@ export default class DOMParser {
         section.renderNode.childNodes.insertAfter(renderNode, previousRenderNode);
 
         let parentNodeCount = marker.closedMarkups.length;
-        let nextMarkerElement = textNode.parentNode;
+        let nextMarkerElement = node.parentNode;
         while (parentNodeCount--) {
           nextMarkerElement = nextMarkerElement.parentNode;
         }
