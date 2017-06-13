@@ -3,16 +3,19 @@
 
 $(() => {
   bootstrapEditor();
+  /*
   bootstrapSimpleDemo();
   bootstrapToolbarEditor();
   bootstrapCardEditor();
+  */
 });
 
 let bootstrapEditor = () => {
   let el = $('#editor')[0];
   let editor = new Mobiledoc.Editor({
-    placeholder: 'Type here',
-    autofocus: true
+    autofocus: true,
+    html: 'Web publishers need a unique kind of content editor, one that is ' +
+          'customizable, handles 3rd party content, and feels natural to write in.'
   });
   editor.render(el);
   activateButtons('#editor-wrapper', editor);

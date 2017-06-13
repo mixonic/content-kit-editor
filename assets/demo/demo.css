@@ -1,18 +1,139 @@
 * , *:before, *:after {
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    box-sizing: border-box;
-}
-
-body {
-  background-color: #F3F3F3;
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-  margin: 1.5em 0 0 0;
-  padding: 0;
-  font-size: 1.1rem;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  font-size: 1.15rem;
   line-height: 1.4;
 }
 
+a {
+  color: #2836AD;
+  text-decoration-skip: ink;
+}
+
+a:visited {
+  color: #5D28AD;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background-color: #F7F7F7;
+  height: 5.9rem;
+  position: relative;
+}
+
+header .home {
+  margin: -1.2rem 0 0 1.7rem;
+  height: 2.5rem;
+  position: absolute;
+  top: 50%;
+}
+
+header .home img {
+  display: inline-block;
+  height: 100%;
+}
+
+nav {
+  margin: -0.8rem 0 0 0;
+  position: absolute;
+  top: 50%;
+  right: 0;
+}
+
+nav a {
+  margin: 0 2.1rem 0 0;
+}
+
+h1 {
+  font-weight: 600;
+  color: #4A4A4A;
+  text-align: center;
+  margin: 3.4rem 0;
+  font-size: 2.0rem;
+}
+
+section {
+  margin: 0 auto;
+  width: 64rem;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-align-items: flex-start;
+  align-items: flex-start;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.bar {
+  background-color: #F7F7F7;
+  vertical-align: middle;
+  width: 100%;
+}
+
+.editor-wrapper {
+  flex: 1.7;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  margin-right: 1rem;
+  padding: 0.3rem;
+}
+
+.editor-pitch {
+  flex: 1;
+  margin-left: 1rem;
+}
+
+#editor {
+  margin: 0.2rem;
+}
+
+.toolbar {
+  width: 100%;
+  background: #F7F7F7;
+}
+
+.toolbar button {
+  background: transparent;
+  opacity: 0.6;
+  border: 0;
+  border-radius: 3px;
+  padding: 4px;
+  line-height: 0;
+  margin: 0.2rem;
+}
+
+.toolbar button[data-arg=ul] {
+  margin-left: 17px;
+}
+
+.format {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  height: 100%;
+}
+
+.note {
+  position: absolute;
+  display: block;
+  text-align: center;
+  font-size: 0.7rem;
+  top: 100px;
+  width: 100%;
+}
+
+
+
+
+/*
 h2 {
   color: #3f3f3f;
 }
@@ -32,10 +153,6 @@ p.strong {
   font-size: 1.25rem;
 }
 
-header {
-  padding-left: 2rem;
-  text-align: center;
-}
 
 section {
   padding: 1rem 2rem;
@@ -132,3 +249,4 @@ table tr {
   background-color: #FFFFFF;
   border: 2px solid #CCCCCC;
 }
+*/
