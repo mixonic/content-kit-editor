@@ -20,6 +20,7 @@ a:visited {
 html, body {
   margin: 0;
   padding: 0;
+  background: url('./geometry.png');
 }
 
 header {
@@ -51,6 +52,17 @@ nav a {
   margin: 0 2.1rem 0 0;
 }
 
+footer {
+  width: 100%;
+  background-color: #4a4a4a;
+  color: #f4f4f4;
+}
+
+.intro-fade {
+  background: linear-gradient(rgba(206, 239, 235, 1.0), rgba(206, 239, 235, 0.2) 12px, rgba(187, 229, 224, 0) 39px);
+  padding-top: 2.7rem;
+}
+
 h1 {
   font-weight: 600;
   color: #4A4A4A;
@@ -73,9 +85,20 @@ section {
 }
 
 .bar {
-  background-color: #F7F7F7;
   vertical-align: middle;
-  width: 100%;
+  align-items: center;
+}
+
+.bar div {
+  padding-right: 0.9rem;
+}
+
+.bar.bar-gray {
+  background-color: #F7F7F7;
+}
+
+.bar.bar-black {
+  background-color: #070707;
 }
 
 .editor-wrapper {
@@ -119,6 +142,7 @@ section {
   text-align: center;
   position: relative;
   height: 100%;
+  margin-bottom: 4rem;
 }
 
 .note {
@@ -130,8 +154,17 @@ section {
   width: 100%;
 }
 
+.video {
+  padding: 1.2rem;
+}
 
+.mt-1 {
+  padding-top: 1rem;
+}
 
+.mb-1 {
+  padding-bottom: 1rem;
+}
 
 /*
 h2 {
