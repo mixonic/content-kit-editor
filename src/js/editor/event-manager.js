@@ -159,10 +159,6 @@ export default class EventManager {
 
     if (editor.handleKeyCommand(event)) { return; }
 
-    if (editor.post.isBlank) {
-      editor._insertEmptyMarkupSectionAtCursor();
-    }
-
     let range = editor.range;
 
     switch(true) {

@@ -139,6 +139,11 @@ class Editor {
     this._renderer = new Renderer(this, cards, atoms, unknownCardHandler, unknownAtomHandler, cardOptions);
 
     this.post = this.loadPost();
+    if (this.post.isBlank) {
+      const section = this.builder.createMarkupSection('p');
+      this.post.sections.insertBefore(section);
+    }
+
     this._renderTree = new RenderTree(this.post);
 
     this._editHistory = new EditHistory(this, this.undoDepth, this.undoBlockTimeout);
